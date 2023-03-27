@@ -21,14 +21,14 @@ axis equal
 % vehicle 1
 plot(0,0,'o')
 plot(x,tan(theta1).*x)
-plot([0 1],[0 0],'-.*',Color='r')
-plot([0 0],[0 1],'-.*',Color='b')
+plot([0 1],[0 0],'->',Color='b')
+plot([0 0],[0 1],'->',Color='b')
 
 % vehicle 2
 plot(x2,y2,'o')
 plot(x,tan(phi2+theta2).*x-tan(phi2+theta2).*x2 + y2)
-plot([x2 x2+cos(phi2).*1],[y2 y2+sin(phi2).*1],'-.*',Color='r')
-plot([x2 x2-sin(phi2).*1],[y2 y2+cos(phi2).*1],'-.*',Color='b')
+plot([x2 x2+cos(phi2).*1],[y2 y2+sin(phi2).*1],'->',Color='r')
+plot([x2 x2-sin(phi2).*1],[y2 y2+cos(phi2).*1],'->',Color='b')
 
 % object
 syms xA yA;

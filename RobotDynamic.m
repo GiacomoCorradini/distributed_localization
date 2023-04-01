@@ -14,10 +14,10 @@ function s_new = RobotDynamic(s, u, Dt)
     omega = u(3);
     
     % Dynamics
-    x_new = x;% + vx*Dt;
-    y_new = y;% + vy*Dt;
+    x_new = x + vx*Dt;
+    y_new = y + vy*Dt;
     theta_new = theta + omega*Dt;
-    
+   
     % Output
     s_new = [x_new; y_new; theta_new];
 

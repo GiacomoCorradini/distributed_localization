@@ -11,7 +11,7 @@ function [xA,yA,x1A,y1A] = object_detection(x1,y1,theta1,x2,y2,phi2,camera1,came
     B = [-tan(theta1+camera1).*x1 + y1;
          -tan(theta2+camera2).*x2 + y2];
     
-    [pointA] = linsolve(A,B);
+    pointA = linsolve(A,B);
 
     xA = pointA(1);
     yA = pointA(2);

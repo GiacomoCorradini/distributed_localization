@@ -78,8 +78,8 @@ for cT=1:length(t)-1
     state_r2(:,cT+1) = RobotDynamic(state_r2(:,cT), u_velocity_2(:,cT), Dt);
 
     % Camera dynamic update
-    camera_store(1,cT+1) = atan2(obj_g(2,1)-state_r1(2,cT+1),obj_g(1,1)-state_r1(1,cT+1)) - state_r1(3,cT+1);
-    camera_store(2,cT+1) = atan2(obj_g(2,1)-state_r2(2,cT+1),obj_g(1,1)-state_r2(1,cT+1)) - state_r2(3,cT+1);
+    camera_store(1,cT+1) = atan2(obj_g(2,cT)-state_r1(2,cT+1),obj_g(1,cT)-state_r1(1,cT+1)) - state_r1(3,cT+1);
+    camera_store(2,cT+1) = atan2(obj_g(2,cT)-state_r2(2,cT+1),obj_g(1,cT)-state_r2(1,cT+1)) - state_r2(3,cT+1);
 
 end
 
@@ -132,52 +132,46 @@ end
 mu_camera = 0.1;        % mean value
 sigma_camera = 1e-2;    % variance
 
-camera1_est = camera1 + randn(1)*sigma_camera + mu_camera;
-camera2_est = camera2 + randn(1)*sigma_camera + mu_camera;
+% camera1_est = camera1 + randn(1)*sigma_camera + mu_camera;
+% camera2_est = camera2 + randn(1)*sigma_camera + mu_camera;
+% camera_store_est = [camera1_est; camera2_est];
+camera_store_est = camera_store + randn(1,length(camera_store))*sigma_camera + mu_camera;
 
 % GPS -> give the position and orientation of the robot2
 mu_GPS = 0.1;           % mean value
 sigma_GPS = 1e-2;       % variance
 
-x1_est = x1 + randn(1)*sigma_GPS + mu_GPS;
-y1_est = y1 + randn(1)*sigma_GPS + mu_GPS;
-theta1_est = theta1 + randn(1)*sigma_GPS + mu_GPS;
-s0_1est = [x1_est; y1_est; theta1_est];
+% x1_est = x1 + randn(1)*sigma_GPS + mu_GPS;
+% y1_est = y1 + randn(1)*sigma_GPS + mu_GPS;
+% theta1_est = theta1 + randn(1)*sigma_GPS + mu_GPS;
+% s0_1est = [x1_est; y1_est; theta1_est];
+s0_1est = s0_1 + randn(1,length(s0_1))*sigma_GPS + mu_GPS;
 
-x2_est = x2 + randn(1)*sigma_GPS + mu_GPS;
-y2_est = y2 + randn(1)*sigma_GPS + mu_GPS;
-theta2_est = theta2 + randn(1)*sigma_GPS + mu_GPS;
-s0_2est = [x2_est; y2_est; theta2_est];
+% x2_est = x2 + randn(1)*sigma_GPS + mu_GPS;
+% y2_est = y2 + randn(1)*sigma_GPS + mu_GPS;
+% theta2_est = theta2 + randn(1)*sigma_GPS + mu_GPS;
+% s0_2est = [x2_est; y2_est; theta2_est];
+s0_2est = s0_2 + randn(1,length(s0_2))*sigma_GPS + mu_GPS;
 
-%% Robot dynamics with uncertainty
+%% Logic
 
-% !! could be intreseting add noise in the input
+% prediction state_1 knowing u_vehicle1 + dynamics
+% correction GPS_1 -> state_r1 + uncertainty
 
-% Vehicle inputs
-% u = [sin(t/10)*2;
-%      sin(t/10)*2;
-%      sin(t/5).*cos(t/4)*1.5];
+% prediction state_2 knowing u_vehicle2 + dynamics
+% correction GPS_2 -> state_r2 + uncertainty
 
-state_r1_est      = zeros(length(s0_1est), length(t));
-state_r2_est      = zeros(length(s0_2est), length(t));
-obj_g_est         = zeros(2,length(t));
-obj_robot1_est    = zeros(2,length(t));
-camera_store_est  = zeros(2,length(t));
+% prediction state_camera1,state_camera2 knowing state_1, state_2, xA, yA +
+% dynamics
+% correction CAMERA -> camera_store + uncertainty
 
-% store the initial value
-state_r1_est(:,1) = s0_1est;
-state_r2_est(:,1) = s0_2est;
-camera_store_est(:,1) = [camera1_est; camera2_est];
+% calculate xA,yA
+
+%% Actuator uncertainty
+
 
 %% Kalman FIlter
 
-for cT=1:length(t)-1
-    % Unicycle dynamic
-    state_r1_est(:,cT+1) = RobotDynamic(state_r1_est(:,cT), u(:,cT), Dt);
-    state_r2_est(:,cT+1) = RobotDynamic(state_r2_est(:,cT), u(:,cT), Dt);
-    %phi2 = theta1 - theta2;
-    %[pointA(1), pointA(2)] = object_detection(x1,y1,theta1,x2,y2,theta2,phi2);
-end
 
 %% PLots
 

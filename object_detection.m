@@ -1,7 +1,13 @@
 function [xA,yA,x1A,y1A] = object_detection(x1,y1,theta1,x2,y2,phi2,camera1,camera2)
 
     % SUMMURY
-    % 
+    % Inputs
+        % x1,y1,theta1: state of the robot 1
+        % x2,y2,phi2: state of the robot 2
+        % camera1, camera2: state of the cameras
+    % Outputs
+        % xA,yA: position of object w.r.t ground
+        % xA1,yA1: position of object w.r.t robot1
 
     theta2 = theta1 + phi2;
 

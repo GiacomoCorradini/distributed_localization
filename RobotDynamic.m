@@ -1,9 +1,12 @@
 function s_new = RobotDynamic(s, u, Dt)
     
-    % SUMMURY
-    % s: actual state (x,y,theta)
-    % u: velocity input (x_dot,y_dot,theta_dot)
-    % dt: time step
+    % SUMMURY -> robot dynamic
+    % Input
+        % s: actual state (x,y,theta)
+        % u: velocity input (x_dot,y_dot,theta_dot)
+        % dt: time step
+    % Output
+        % s_new: new state (x_nex,y_new,theta_new)
 
     % Inputs
     x = s(1);

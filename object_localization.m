@@ -153,7 +153,9 @@ s0_1est = s0_1 + randn(1,length(s0_1))*sigma_GPS + mu_GPS;
 % s0_2est = [x2_est; y2_est; theta2_est];
 s0_2est = s0_2 + randn(1,length(s0_2))*sigma_GPS + mu_GPS;
 
-%% Logic
+%% Kalman filter
+
+% Logic KF
 
 % prediction state_1 knowing u_vehicle1 + dynamics
 % correction GPS_1 -> state_r1 + uncertainty
@@ -165,12 +167,9 @@ s0_2est = s0_2 + randn(1,length(s0_2))*sigma_GPS + mu_GPS;
 % dynamics
 % correction CAMERA -> camera_store + uncertainty
 
-% calculate xA,yA
+% calculate xA,yA knowing state_1,state_2,cmaera_state
 
-%% Actuator uncertainty
-
-
-%% Kalman FIlter
+% KF implementation
 
 
 %% PLots

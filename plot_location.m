@@ -1,7 +1,12 @@
 function plot_location(x1,y1,theta1,x2,y2,phi2,xA,yA,camera1,camera2)
     
-    % SUMMURY
-    % plots of the robot RF and object A
+    % SUMMURY -> plots of the robots Reference Frame and object
+    % Input
+        % x1,y1,theta1: state of the robot 1
+        % x2,y2,phi2: state of the robot 2
+        % camera1, camera2: state of the cameras
+    % Output
+        % None
     
     x_plot1 = (x1-20):(x1+20);
     x_plot2 = (x2-20):(x2+20);

@@ -8,6 +8,9 @@ function s_new = RobotDynamic(s, u, Dt)
     % Output
         % s_new: new state (x_nex,y_new,theta_new)
 
+    % s_k = [x_k, y_k, theta_k]
+    % s_k+1 = A[ = eye(3)]*s_k + b[ = eye(3)]*u
+
     % Inputs
     x = s(1);
     y = s(2);

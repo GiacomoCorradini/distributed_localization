@@ -108,7 +108,7 @@ title('Robot position in time');
 xlim([-50 50])
 ylim([-50 50])
 
-for i = 1:length(t)
+for i = 1:length(t)-1
 
     phi2 = s_r2(3,i) - s_r1(3,i);
 
@@ -155,10 +155,10 @@ Pcam = 10^2*eye(length(camera_0));        % our knowledge about the initial posi
 ProbGPS = 0.9;
 
 s_r1_est = zeros(length(s0_1),length(t));
-P1 = 10^-2*eye(length(s0_1));              % our knowledge about the initial position of the robot 1
+P1 = 10^2*eye(length(s0_1));              % our knowledge about the initial position of the robot 1
 
 s_r2_est = zeros(length(s0_2),length(t));
-P2 = 10^-2*eye(length(s0_2));              % our knowledge about the initial position of the robot 2
+P2 = 10^2*eye(length(s0_2));              % our knowledge about the initial position of the robot 2
 
 % Logic KF
 
@@ -220,8 +220,9 @@ for i=1:length(t)-1
         s_r2_est(:,i+1) = S2EstPred;
         P2 = P2pred;
     end
-%     %% Camera 1p2
-%     
+    
+    %% Object detection
+ 
 %     % Prediction
 %     x1p2EstPred = a*x1p2Est(i) + b*u1_bar(i);
 %     P1p2pred = a*P1p2*a' + b*sigma_u1^2*b';
@@ -229,16 +230,10 @@ for i=1:length(t)-1
 %     % Update
 %     pRadar = rand(1);
 %     if (pGPS1 <= ProbGPS1)
-%         if (pRadar <= ProbRadar)
 %             H = [1; -1];
 %             RadarMeasurements = x2Store(i+1) - x1Store(i+1) + randn(1)*sigma_radar + mu_radar;
 %             z = [x1GPS(i+1); RadarMeasurements - x2Est(i+1)];
 %             R = [sigma_gps1^2, 0; 0, sigma_radar^2 + P2];
-%         else
-%             H = 1;
-%             z = x1GPS(i+1);
-%             R = sigma_gps1^2;
-%         end
 %     else
 %          if (pRadar <= ProbRadar)
 %             H = -1;

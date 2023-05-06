@@ -1,4 +1,4 @@
-function sigma = PropError(f,varlist,vals,errs)
+function [mu,sigma] = PropError(f,varlist,vals,errs)
 %SIGMA = PROPERROR(F,VARLIST,VALS,ERRS)
 %
 %Finds the propagated uncertainty in a function f with estimated variables
@@ -31,5 +31,7 @@ for i = 1:n
 end
 error1 =sqrt((sum((subs(sig,varlist,vals).^2).*(errs.^2))));
 error = double(error1);
-sigma = [{eval(subs(f,varlist,vals))} {'+/-'} {error};
-         {'Percent Error'} {'+/-'} {eval(abs(100*(error)/subs(f,varlist,vals)))}];
+% sigma = [{eval(subs(f,varlist,vals))} {'+/-'} {error};
+%          {'Percent Error'} {'+/-'} {eval(abs(100*(error)/subs(f,varlist,vals)))}];
+mu = eval(subs(f,varlist,vals));
+sigma = error;

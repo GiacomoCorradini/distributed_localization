@@ -16,6 +16,9 @@ to_rad = pi/180;
 
 % include distributed_localization folder
 addpath('../')
+obj_sol;
+
+tmp = 0;
 
 %% State initialization
 
@@ -130,12 +133,12 @@ sigma_u = 1e-2;  % covariance
 u_1bar = u_1 + randn(1,length(u_1))*sigma_u + mu_u;
 u_2bar = u_2 + randn(1,length(u_2))*sigma_u + mu_u;
 
-figure('Name','Camera noise'), clf, hold on;
-plot(t, cameraSensor(1,:) - s_camera(1,:));
-plot(t, cameraSensor(2,:) - s_camera(2,:));
-title('Camera noise');
-legend('noise camera 1','noise camera 2')
-xlabel('t [s]'); ylabel('noise [m]');
+% figure('Name','Camera noise'), clf, hold on;
+% plot(t, cameraSensor(1,:) - s_camera(1,:));
+% plot(t, cameraSensor(2,:) - s_camera(2,:));
+% title('Camera noise');
+% legend('noise camera 1','noise camera 2')
+% xlabel('t [s]'); ylabel('noise [m]');
 
 %% Kalman filter
 
@@ -147,16 +150,21 @@ Pcam = 10^2*eye(length(camera_0));        % our knowledge about the initial posi
 ProbGPS = 0.9;
 
 s_r1_est = zeros(length(s0_1),length(t));
+s_r1_est(:,1) = s_1GPS(:,1);
 P1 = 10^2*eye(length(s0_1));              % our knowledge about the initial position of the robot 1
+P1Store = cell(1, length(t));
+P1Store{1} = eye(length(s0_1))*sigma_GPS;
 
 s_r2_est = zeros(length(s0_2),length(t));
+s_r2_est(:,1) = s_2GPS(:,1);
 P2 = 10^2*eye(length(s0_2));              % our knowledge about the initial position of the robot 2
-
+P2Store = cell(1, length(t));
+P2Store{1} = eye(length(s0_2))*sigma_GPS;
 
 obj_ground_est = zeros(length(s0_obj),length(t));
 obj_robot1_est = zeros(length(s0_obj),length(t));
-prop_Err = zeros(length(s0_obj),length(t));
-
+mu_Err = zeros(length(s0_obj),length(t));
+sigma_Err = zeros(length(s0_obj),length(t));
 for i=1:length(t)-1
     
     %% Robot 1
@@ -181,6 +189,8 @@ for i=1:length(t)-1
         P1 = P1pred;
     end
 
+    P1Store{i+1} = P1;
+
     %% Robot 2
     
     % Prediction step
@@ -202,23 +212,40 @@ for i=1:length(t)-1
         s_r2_est(:,i+1) = S2EstPred;
         P2 = P2pred;
     end
+
+    P2Store{i+1} = P2;
     
     %% Object detection robot 1
     
     % calculate the position of the object for each time step
-    index = randi([1 i]); 
-    phi1 = s_r1_est(3,i+1) - s_r1_est(3,index);
-    [obj_ground_est(1,i),obj_grousnd_est(2,i),obj_robot1_est(1,i),obj_robot1_est(2,i)] = ...
-     object_detection(s_r1_est(1,index),s_r1_est(2,index),s_r1_est(3,index),s_r1_est(1,i+1),s_r1_est(2,i+1),...
-     phi1,s_camera(1,i),s_camera(1,i+1));
+%     index = randi([1 i]); 
+%     phi1 = s_r1_est(3,i+1) - s_r1_est(3,index);
+%     [obj_ground_est(1,i),obj_ground_est(2,i),obj_robot1_est(1,i),obj_robot1_est(2,i)] = ...
+%      object_detection(s_r1_est(1,index),s_r1_est(2,index),s_r1_est(3,index),s_r1_est(1,i+1),s_r1_est(2,i+1),...
+%      phi1,s_camera(1,i),s_camera(1,i+1));
 
     % the error must be propagate
-    obj_sol;
-    valuelist = [s_r1_est(1,i),s_r1_est(2,i),s_r1_est(3,i),...
-                 cameraSensor(1,i),s_r2_est(1,i),s_r2_est(2,i),s_r2_est(3,i),cameraSensor(2,i)];
-    errlist = [sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera,sqrt(P2(1,1)),sqrt(P2(2,2)),sqrt(P2(3,3)),sigma_camera];
-    prop_Err(1,i) = PropError(xA,varlist,valuelist,errlist);
-    prop_Err(2,i) = PropError(yA,varlist,valuelist,errlist);
+
+    for j = 1:i
+        valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
+                 cameraSensor(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
+        errlist = [sqrt(P1Store{j}(1,1)),sqrt(P1Store{j}(2,2)),sqrt(P1Store{j}(3,3)),sigma_camera,...
+                   sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera];
+        [~,tmp_sigma_Err] = PropError(xA,varlist,valuelist,errlist);
+%         [~,tmp_sigma_Err] = PropError(yA,varlist,valuelist,errlist);
+        if tmp_sigma_Err < tmp || j == 1
+            index = j;
+            tmp = tmp_sigma_Err;
+        end
+    end
+
+%     index = randi([1 ceil(i/10)]); 
+    valuelist = [s_r1_est(1,index),s_r1_est(2,index),s_r1_est(3,index),...
+                 cameraSensor(1,index),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
+    errlist = [sqrt(P1Store{index}(1,1)),sqrt(P1Store{index}(2,2)),sqrt(P1Store{index}(3,3)),sigma_camera,...
+               sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera];
+    [mu_Err(1,i),sigma_Err(1,i)] = PropError(xA,varlist,valuelist,errlist);
+    [mu_Err(2,i),sigma_Err(2,i)] = PropError(yA,varlist,valuelist,errlist);
 
 %     %% Object detection robot 2
 %     
@@ -233,36 +260,6 @@ end
 
 %% PLots
 
-figure('Name','Robot position estimation'), clf, hold on;
-plot(s_r1(1,:),s_r1(2,:),'-',Color='r')
-plot(s_r1_est(1,:),s_r1_est(2,:),'-',Color='g')
-plot(s_r2(1,:),s_r2(2,:),'-',Color='b')
-plot(s_r2_est(1,:),s_r2_est(2,:),'-',Color='m')
+plots;
 
-figure('Name','X Error'), clf, hold on;
-plot(t, s_r1_est(1,:) - s_r1(1,:));
-plot(t, s_r2_est(1,:) - s_r2(1,:));
-title('X Error');
-legend('Robot1','Robot2')
-xlabel('t [s]'); ylabel('x [m]');
 
-figure('Name','Y Error'), clf, hold on;
-plot(t, s_r1_est(2,:) - s_r1(2,:));
-plot(t, s_r2_est(2,:) - s_r2(2,:));
-title('Y Error');
-legend('Robot1','Robot2')
-xlabel('t [s]'); ylabel('y [m]');
-
-figure('Name','Theta Error'), clf, hold on;
-plot(t, s_r1_est(3,:) - s_r1(3,:));
-plot(t, s_r2_est(3,:) - s_r2(3,:));
-title('Theta Error');
-legend('Robot1','Robot2')
-xlabel('t [s]'); ylabel('theta [m]');
-
-figure('Name','Obj Error'), clf, hold on;
-plot(t, obj_ground_est(1,:) - obj_ground(1,:));
-plot(t, obj_ground_est(2,:) - obj_ground(2,:));
-title('Obj Error');
-legend('x error','y error')
-xlabel('t [s]'); ylabel('err [m]');

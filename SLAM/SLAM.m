@@ -4,9 +4,6 @@ clc
 clear
 close all
 
-% random seed
-rng(1)
-
 % simulation time definition
 Dt = 0.1;
 t = 0:Dt:20;
@@ -111,7 +108,7 @@ end
 % CAMERA -> give the angle between the forward axis and the line passing
 % through the center of the robot and the object
 mu_camera = 0;        % mean value -> 0 means calibrated
-sigma_camera = 1e-2;  % variance
+sigma_camera = 0;  % variance
 
 cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
 
@@ -119,17 +116,21 @@ cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
 % GPS -> give the position and orientation of the robot2
 mu_GPS = 0;           % mean value -> 0 means calibrated
 sigma_GPS = 1e-2;     % variance
+mu_th_GPS = 0;           % mean value -> 0 means calibrated
+sigma_th_GPS = 1e-3;     % variance
 
-s_1GPS = s_r1 + randn(1,length(s_r1))*sigma_GPS + mu_GPS;
-s_2GPS = s_r2 + randn(1,length(s_r2))*sigma_GPS + mu_GPS;
+s_1GPS(1:2,:) = s_r1(1:2,:) + randn(2,length(s_r1)).*sigma_GPS + mu_GPS.*ones(2,length(s_r1));
+s_2GPS(1:2,:) = s_r2(1:2,:) + randn(2,length(s_r2)).*sigma_GPS + mu_GPS.*ones(2,length(s_r2));
+s_1GPS(3,:)   = s_r1(3,:)   + randn(1,length(s_r1)).*sigma_th_GPS + mu_th_GPS.*ones(1,length(s_r1));
+s_2GPS(3,:)   = s_r2(3,:)   + randn(1,length(s_r2)).*sigma_th_GPS + mu_th_GPS.*ones(1,length(s_r2));
 
 % -------------------------------------------------------------------------
 % INPUT -> input velocity of the robot
 mu_u = zeros(3,1);        % mean value -> 0 means calibrated
 sigma_u = 1e-2;  % covariance
 
-u_1bar = u_1 + randn(1,length(u_1))*sigma_u + mu_u;
-u_2bar = u_2 + randn(1,length(u_2))*sigma_u + mu_u;
+u_1bar = u_1 + randn(3,length(u_1)).*sigma_u + mu_u.*ones(3,length(s_r1));
+u_2bar = u_2 + randn(3,length(u_2)).*sigma_u + mu_u.*ones(3,length(s_r1));
 
 % figure('Name','Camera noise'), clf, hold on;
 % plot(t, cameraSensor(1,:) - s_camera(1,:));
@@ -163,6 +164,9 @@ obj_ground_est = zeros(length(s0_obj),length(t));
 obj_robot1_est = zeros(length(s0_obj),length(t));
 mu_Err = zeros(length(s0_obj)*2,length(t));
 sigma_Err = zeros(length(s0_obj)*2,length(t));
+
+mu_Err2 = zeros(length(s0_obj),length(t));
+sigma_Err2 = zeros(length(s0_obj),length(t));
 
 %%
 for i=1:length(t)-1
@@ -239,17 +243,11 @@ for i=1:length(t)-1
 %         end
 %     end
     
-    if i >= 5
-        tmp_sigma_Err = 5;
-        while tmp_sigma_Err > 100
-        j = randi([1,i]);
-        valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
-                 cameraSensor(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
-        errlist = [sqrt(P1Store{j}(1,1)),sqrt(P1Store{j}(2,2)),sqrt(P1Store{j}(3,3)),sigma_camera,...
-                   sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera];
-        [~,tmp_sigma_x] = PropError(xA,varlist,valuelist,errlist);
-        [~,tmp_sigma_y] = PropError(yA,varlist,valuelist,errlist);
-        tmp_sigma_Err = mean([tmp_sigma_x,tmp_sigma_y]);
+    if i >= 20
+        tmp_sigma_Err = 0;
+        while abs(tmp_sigma_Err) < 0.1       
+        j = randi([10,i]);
+        tmp_sigma_Err = s_r1_est(3,i+1) - s_r1_est(3, j) + cameraSensor(1,i+1) - cameraSensor(1,j);
         end
     else, j = i;
     end
@@ -261,17 +259,11 @@ for i=1:length(t)-1
     [mu_Err(1,i),sigma_Err(1,i)] = PropError(xA,varlist,valuelist,errlist);
     [mu_Err(2,i),sigma_Err(2,i)] = PropError(yA,varlist,valuelist,errlist);
 
-    if i >= 5
-        tmp_sigma_Err = 5;
-        while tmp_sigma_Err > 100
-        j = randi([1,i]);
-        valuelist = [s_r2_est(1,j),s_r2_est(2,j),s_r2_est(3,j),...
-                 cameraSensor(2,j),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(2,i+1)];
-        errlist = [sqrt(P2Store{j}(1,1)),sqrt(P2Store{j}(2,2)),sqrt(P2Store{j}(3,3)),sigma_camera,...
-                   sqrt(P2(1,1)),sqrt(P2(2,2)),sqrt(P2(3,3)),sigma_camera];
-        [~,tmp_sigma_x] = PropError(xA,varlist,valuelist,errlist);
-        [~,tmp_sigma_y] = PropError(yA,varlist,valuelist,errlist);
-        tmp_sigma_Err = mean([tmp_sigma_x,tmp_sigma_y]);
+    if i >= 15
+        tmp_sigma_Err = 0;
+        while abs(tmp_sigma_Err) < 0.1       
+        j = randi([7,i]);
+        tmp_sigma_Err = s_r2_est(3,i+1) - s_r2_est(3, j) + cameraSensor(2,i+1) - cameraSensor(2,j);
         end
     else, j = i;
     end
@@ -295,15 +287,13 @@ for i=1:length(t)-1
 
 
 %     valuelist = [s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),...
-%                  cameraSensor(1,i+1),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(1,i+1)];
+%                  cameraSensor(1,i+1),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(2,i+1)];
 %     errlist = [sqrt(P1Store{i+1}(1,1)),sqrt(P1Store{i+1}(2,2)),sqrt(P1Store{i+1}(3,3)),sigma_camera,...
-%                sqrt(P2(1,1)),sqrt(P2(2,2)),sqrt(P2(3,3)),sigma_camera];
-%     [mu_Err_2(1,i),sigma_Err_2(1,i)] = PropError(xA,varlist,valuelist,errlist);
-%     [mu_Err_2(2,i),sigma_Err_2(2,i)] = PropError(yA,varlist,valuelist,errlist);
+%                sqrt(P2Store{i+1}(1,1)),sqrt(P2Store{i+1}(1,1)),sqrt(P2Store{i+1}(1,1)),sigma_camera];
+%     [mu_Err2(1,i),sigma_Err2(1,i)] = PropError(xA,varlist,valuelist,errlist);
+%     [mu_Err2(2,i),sigma_Err2(2,i)] = PropError(yA,varlist,valuelist,errlist);
 end
 
 %% PLots
 
 plots;
-
-

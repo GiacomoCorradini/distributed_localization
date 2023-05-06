@@ -56,13 +56,13 @@ legend('dev std xA-r1','dev std yA-r1','dev std xA-r2','dev std yA-r2')
 xlabel('t [s]'); ylabel('[m]');
 
 figure('Name','Est obj'), clf, hold on;
-p1 = plot(mu_Err(1,2:end-1),mu_Err(2,2:end-1),'.','Color', "#0072BD",'DisplayName','Est obj robot 1');
-p2 = plot(mu_Err(3,2:end-1),mu_Err(4,2:end-1),'.','Color',"#D95319",'DisplayName','Est obj robot 2');
+p1 = plot(mu_Err(1,10:end-1),mu_Err(2,10:end-1),'.','Color', "#0072BD",'DisplayName','Est obj robot 1');
+p2 = plot(mu_Err(3,10:end-1),mu_Err(4,10:end-1),'.','Color',"#D95319",'DisplayName','Est obj robot 2');
 p3 = plot(s0_obj(1),s0_obj(2),'.','Color','r','MarkerSize',40,'DisplayName','Real obj');
-pp1 = polyfit(mu_Err(1,2:end-1),mu_Err(2,2:end-1),1);
-plot(mu_Err(1,2:end-1),mu_Err(1,2:end-1).*pp1(1)+pp1(2),'Color', "#0072BD",'DisplayName','Est obj robot 1')
-pp2 = polyfit(mu_Err(3,2:end-1),mu_Err(4,2:end-1),1);
-plot(mu_Err(3,2:end-1),mu_Err(3,2:end-1).*pp2(1)+pp2(2),'Color',"#D95319",'DisplayName','Est obj robot 2')
+pp1 = polyfit(mu_Err(1,10:end-1),mu_Err(2,10:end-1),1);
+plot(mu_Err(1,10:end-1),mu_Err(1,10:end-1).*pp1(1)+pp1(2),'Color', "#0072BD",'DisplayName','Est obj robot 1')
+pp2 = polyfit(mu_Err(3,10:end-1),mu_Err(4,10:end-1),1);
+plot(mu_Err(3,10:end-1),mu_Err(3,10:end-1).*pp2(1)+pp2(2),'Color',"#D95319",'DisplayName','Est obj robot 2')
 xest = (pp2(2)-pp1(2))/(pp1(1)-pp2(1));
 yest = pp1(1)*xest + pp1(2);
 p4 = plot(xest,yest,'.','Color',"#77AC30",'MarkerSize',40,'DisplayName','Interp obj');

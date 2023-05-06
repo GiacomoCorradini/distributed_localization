@@ -23,17 +23,20 @@ legend('Robot1','Robot2')
 xlabel('t [s]'); ylabel('y [m]');
 
 figure('Name','Theta Error'), clf, hold on;
-plot(t, s_r1_est(3,:) - s_r1(3,:));
-plot(t, s_r2_est(3,:) - s_r2(3,:));
+plot(t, (s_r1_est(3,:) - s_r1(3,:))/to_rad);
+plot(t, (s_r2_est(3,:) - s_r2(3,:))/to_rad);
 title('Theta Error');
 legend('Robot1','Robot2')
-xlabel('t [s]'); ylabel('theta [m]');
+xlabel('t [s]'); ylabel('theta [deg]');
 
 figure('Name','Obj Error'), clf, hold on;
 plot(t, mu_Err(1,:) - obj_ground(1,:));
 plot(t, mu_Err(2,:) - obj_ground(2,:));
+plot(t, mu_Err(3,:) - obj_ground(1,:));
+plot(t, mu_Err(4,:) - obj_ground(2,:));
 title('Obj Error');
-legend('x error','y error')
+xlim([0, t(end-1)])
+legend('x error robot 1','y error robot 1','x error robot 2','y error robot 2')
 xlabel('t [s]'); ylabel('err [m]');
 
 % figure('Name','Obj Error'), clf, hold on;
@@ -46,15 +49,25 @@ xlabel('t [s]'); ylabel('err [m]');
 figure('Name','Dev std'), clf, hold on;
 plot(t, sigma_Err(1,:));
 plot(t, sigma_Err(2,:));
+plot(t, sigma_Err(3,:));
+plot(t, sigma_Err(4,:));
 title('Dev std');
-legend('dev std xA','dev std yA')
+legend('dev std xA-r1','dev std yA-r1','dev std xA-r2','dev std yA-r2')
 xlabel('t [s]'); ylabel('[m]');
 
 figure('Name','Est obj'), clf, hold on;
-plot(mu_Err(1,2:end-1),mu_Err(2,2:end-1),'.');
-plot(s0_obj(1).*ones(length(t)),s0_obj(2).*ones(length(t)),'.','Color','r','MarkerSize',40);
+p1 = plot(mu_Err(1,2:end-1),mu_Err(2,2:end-1),'.','Color', "#0072BD",'DisplayName','Est obj robot 1');
+p2 = plot(mu_Err(3,2:end-1),mu_Err(4,2:end-1),'.','Color',"#D95319",'DisplayName','Est obj robot 2');
+p3 = plot(s0_obj(1),s0_obj(2),'.','Color','r','MarkerSize',40,'DisplayName','Real obj');
+pp1 = polyfit(mu_Err(1,2:end-1),mu_Err(2,2:end-1),1);
+plot(mu_Err(1,2:end-1),mu_Err(1,2:end-1).*pp1(1)+pp1(2),'Color', "#0072BD",'DisplayName','Est obj robot 1')
+pp2 = polyfit(mu_Err(3,2:end-1),mu_Err(4,2:end-1),1);
+plot(mu_Err(3,2:end-1),mu_Err(3,2:end-1).*pp2(1)+pp2(2),'Color',"#D95319",'DisplayName','Est obj robot 2')
+xest = (pp2(2)-pp1(2))/(pp1(1)-pp2(1));
+yest = pp1(1)*xest + pp1(2);
+p4 = plot(xest,yest,'.','Color',"#77AC30",'MarkerSize',40,'DisplayName','Interp obj');
 title('Est obj');
-legend('Est obj','Real obj')
+legend([p1,p2,p3,p4]);
 xlabel('x [m]'); ylabel('y [m]');
 
 figure('Name','Error(t)'), clf, hold on;

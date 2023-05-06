@@ -18,8 +18,6 @@ to_rad = pi/180;
 addpath('../')
 obj_sol;
 
-tmp = 0;
-
 %% State initialization
 
 % robot 1 initial position
@@ -41,12 +39,12 @@ s0_obj = [obj_x; obj_y];             % state of robot 2
 
 %% Create dataset of robot position + camera measurement
 
-u_1 = [sin(t/10);
-       cos(t/10);
+u_1 = [3*sin(t/10);
+       3*cos(t/10);
        sin(t/5).*cos(t/4)*1.5];             % velocity of robot 1
 
-u_2 = [cos(t/10);
-       sin(t/10);
+u_2 = [3*cos(t/10);
+       -3*sin(t/10);
        sin(t/5).*cos(t/4)*1.5];             % velocity of robot 2
 
 % Initialize array to store the value 
@@ -113,14 +111,14 @@ end
 % CAMERA -> give the angle between the forward axis and the line passing
 % through the center of the robot and the object
 mu_camera = 0;        % mean value -> 0 means calibrated
-sigma_camera = 1e-4;  % variance
+sigma_camera = 1e-2;  % variance
 
 cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
 
 % -------------------------------------------------------------------------
 % GPS -> give the position and orientation of the robot2
 mu_GPS = 0;           % mean value -> 0 means calibrated
-sigma_GPS = 1e-4;     % variance
+sigma_GPS = 1e-2;     % variance
 
 s_1GPS = s_r1 + randn(1,length(s_r1))*sigma_GPS + mu_GPS;
 s_2GPS = s_r2 + randn(1,length(s_r2))*sigma_GPS + mu_GPS;
@@ -163,12 +161,14 @@ P2Store{1} = eye(length(s0_2))*sigma_GPS;
 
 obj_ground_est = zeros(length(s0_obj),length(t));
 obj_robot1_est = zeros(length(s0_obj),length(t));
-mu_Err = zeros(length(s0_obj),length(t));
-sigma_Err = zeros(length(s0_obj),length(t));
+mu_Err = zeros(length(s0_obj)*2,length(t));
+sigma_Err = zeros(length(s0_obj)*2,length(t));
+
+%%
 for i=1:length(t)-1
-    
     %% Robot 1
     
+    fprintf('Iter %d\n',i)
     % Prediction step
     % s_k+1 = A*s_k + B*u_k
     A = eye(3);
@@ -181,7 +181,7 @@ for i=1:length(t)-1
     if (pGPS1 <= ProbGPS)
         H = eye(3);                                                  % z_k = H*Sk
         InnCov = H*P1pred*H' + sigma_GPS^2;                          % Covariance of Innovation
-        W = P1pred*H'*inv(InnCov);                                   % KF gain
+        W = P1pred*H'/InnCov;                                   % KF gain
         s_r1_est(:,i+1) = S1EstPred + W*(s_1GPS(:,i+1)-H*S1EstPred); % Updated state estimate
         P1 = (eye(length(s0_1))-W*H)*P1pred;                         % Updated covariance matrix
     else
@@ -205,7 +205,7 @@ for i=1:length(t)-1
     if (pGPS2 <= ProbGPS)
         H = eye(3);                                                  % z_k = H*Sk
         InnCov = H*P2pred*H' + sigma_GPS^2;                          % Covariance of Innovation
-        W = P2pred*H'*inv(InnCov);                                   % KF gain
+        W = P2pred*H'/InnCov;                                   % KF gain
         s_r2_est(:,i+1) = S2EstPred + W*(s_2GPS(:,i+1)-H*S2EstPred); % Updated state estimate
         P2 = (eye(length(s0_2))-W*H)*P2pred;                         % Updated covariance matrix
     else
@@ -214,7 +214,7 @@ for i=1:length(t)-1
     end
 
     P2Store{i+1} = P2;
-    
+ 
     %% Object detection robot 1
     
     % calculate the position of the object for each time step
@@ -226,26 +226,62 @@ for i=1:length(t)-1
 
     % the error must be propagate
 
-    for j = 1:i
+%     for j = 1:i
+%         valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
+%                  cameraSensor(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
+%         errlist = [sqrt(P1Store{j}(1,1)),sqrt(P1Store{j}(2,2)),sqrt(P1Store{j}(3,3)),sigma_camera,...
+%                    sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera];
+%         [~,tmp_sigma_Err] = PropError(xA,varlist,valuelist,errlist);
+% %         [~,tmp_sigma_Err] = PropError(yA,varlist,valuelist,errlist);
+%         if tmp_sigma_Err < tmp || j == 1
+%             index = j;
+%             tmp = tmp_sigma_Err;
+%         end
+%     end
+    
+    if i >= 5
+        tmp_sigma_Err = 5;
+        while tmp_sigma_Err > 100
+        j = randi([1,i]);
         valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
                  cameraSensor(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
         errlist = [sqrt(P1Store{j}(1,1)),sqrt(P1Store{j}(2,2)),sqrt(P1Store{j}(3,3)),sigma_camera,...
                    sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera];
-        [~,tmp_sigma_Err] = PropError(xA,varlist,valuelist,errlist);
-%         [~,tmp_sigma_Err] = PropError(yA,varlist,valuelist,errlist);
-        if tmp_sigma_Err < tmp || j == 1
-            index = j;
-            tmp = tmp_sigma_Err;
+        [~,tmp_sigma_x] = PropError(xA,varlist,valuelist,errlist);
+        [~,tmp_sigma_y] = PropError(yA,varlist,valuelist,errlist);
+        tmp_sigma_Err = mean([tmp_sigma_x,tmp_sigma_y]);
         end
+    else, j = i;
     end
 
-%     index = randi([1 ceil(i/10)]); 
-    valuelist = [s_r1_est(1,index),s_r1_est(2,index),s_r1_est(3,index),...
-                 cameraSensor(1,index),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
-    errlist = [sqrt(P1Store{index}(1,1)),sqrt(P1Store{index}(2,2)),sqrt(P1Store{index}(3,3)),sigma_camera,...
+    valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
+                 cameraSensor(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
+    errlist = [sqrt(P1Store{j}(1,1)),sqrt(P1Store{j}(2,2)),sqrt(P1Store{j}(3,3)),sigma_camera,...
                sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera];
     [mu_Err(1,i),sigma_Err(1,i)] = PropError(xA,varlist,valuelist,errlist);
     [mu_Err(2,i),sigma_Err(2,i)] = PropError(yA,varlist,valuelist,errlist);
+
+    if i >= 5
+        tmp_sigma_Err = 5;
+        while tmp_sigma_Err > 100
+        j = randi([1,i]);
+        valuelist = [s_r2_est(1,j),s_r2_est(2,j),s_r2_est(3,j),...
+                 cameraSensor(2,j),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(2,i+1)];
+        errlist = [sqrt(P2Store{j}(1,1)),sqrt(P2Store{j}(2,2)),sqrt(P2Store{j}(3,3)),sigma_camera,...
+                   sqrt(P2(1,1)),sqrt(P2(2,2)),sqrt(P2(3,3)),sigma_camera];
+        [~,tmp_sigma_x] = PropError(xA,varlist,valuelist,errlist);
+        [~,tmp_sigma_y] = PropError(yA,varlist,valuelist,errlist);
+        tmp_sigma_Err = mean([tmp_sigma_x,tmp_sigma_y]);
+        end
+    else, j = i;
+    end
+
+    valuelist = [s_r2_est(1,j),s_r2_est(2,j),s_r2_est(3,j),...
+                 cameraSensor(2,j),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(2,i+1)];
+    errlist = [sqrt(P2Store{j}(1,1)),sqrt(P2Store{j}(2,2)),sqrt(P2Store{j}(3,3)),sigma_camera,...
+               sqrt(P2(1,1)),sqrt(P2(2,2)),sqrt(P2(3,3)),sigma_camera];
+    [mu_Err(3,i),sigma_Err(3,i)] = PropError(xA,varlist,valuelist,errlist);
+    [mu_Err(4,i),sigma_Err(4,i)] = PropError(yA,varlist,valuelist,errlist);
 
 %     %% Object detection robot 2
 %     
@@ -256,6 +292,14 @@ for i=1:length(t)-1
 %      phi2,s_camera(1,cT),s_camera(2,cT));
 % 
 %     % the error must be propagate
+
+
+%     valuelist = [s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),...
+%                  cameraSensor(1,i+1),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(1,i+1)];
+%     errlist = [sqrt(P1Store{i+1}(1,1)),sqrt(P1Store{i+1}(2,2)),sqrt(P1Store{i+1}(3,3)),sigma_camera,...
+%                sqrt(P2(1,1)),sqrt(P2(2,2)),sqrt(P2(3,3)),sigma_camera];
+%     [mu_Err_2(1,i),sigma_Err_2(1,i)] = PropError(xA,varlist,valuelist,errlist);
+%     [mu_Err_2(2,i),sigma_Err_2(2,i)] = PropError(yA,varlist,valuelist,errlist);
 end
 
 %% PLots

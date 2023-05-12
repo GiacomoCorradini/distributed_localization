@@ -38,11 +38,11 @@ s0_obj = [obj_x; obj_y];             % state of robot 2
 
 u_1 = [3*sin(t/10);
        3*cos(t/10);
-       sin(t/5).*cos(t/4)*1.5];             % velocity of robot 1
+       sin(t/5).*cos(t/4)*0];             % velocity of robot 1
 
 u_2 = [3*cos(t/10);
        -3*sin(t/10);
-       sin(t/5).*cos(t/4)*1.5];             % velocity of robot 2
+       sin(t/5).*cos(t/4)*0];             % velocity of robot 2
 
 % Initialize array to store the value 
 s_r1       = zeros(length(s0_1),length(t));
@@ -91,12 +91,12 @@ title('Robot position in time');
 xlim([-50 50])
 ylim([-50 50])
 
-for i = 1:length(t)-1
+for i = 1:3:length(t)-1
 
     phi2 = s_r2(3,i) - s_r1(3,i);
 
     plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
-                  obj_ground(1,cT),obj_ground(2,cT),s_camera(1,i),s_camera(2,i));
+                  obj_ground(1,cT),obj_ground(2,cT),s_camera(1,i),s_camera(2,i), color(1), color(11));
  
     drawnow
 
@@ -108,7 +108,7 @@ end
 % CAMERA -> give the angle between the forward axis and the line passing
 % through the center of the robot and the object
 mu_camera = 0;        % mean value -> 0 means calibrated
-sigma_camera = 0;  % variance
+sigma_camera = 1e-2;     % variance
 
 cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
 
@@ -117,7 +117,7 @@ cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
 mu_GPS = 0;           % mean value -> 0 means calibrated
 sigma_GPS = 1e-2;     % variance
 mu_th_GPS = 0;           % mean value -> 0 means calibrated
-sigma_th_GPS = 1e-3;     % variance
+sigma_th_GPS = 0;     % variance
 
 s_1GPS(1:2,:) = s_r1(1:2,:) + randn(2,length(s_r1)).*sigma_GPS + mu_GPS.*ones(2,length(s_r1));
 s_2GPS(1:2,:) = s_r2(1:2,:) + randn(2,length(s_r2)).*sigma_GPS + mu_GPS.*ones(2,length(s_r2));
@@ -153,12 +153,14 @@ s_r1_est(:,1) = s_1GPS(:,1);
 P1 = 10^2*eye(length(s0_1));              % our knowledge about the initial position of the robot 1
 P1Store = cell(1, length(t));
 P1Store{1} = eye(length(s0_1))*sigma_GPS;
+P1Store{1}(length(s0_1),length(s0_1)) = sigma_th_GPS;
 
 s_r2_est = zeros(length(s0_2),length(t));
 s_r2_est(:,1) = s_2GPS(:,1);
 P2 = 10^2*eye(length(s0_2));              % our knowledge about the initial position of the robot 2
 P2Store = cell(1, length(t));
 P2Store{1} = eye(length(s0_2))*sigma_GPS;
+P2Store{1}(length(s0_2),length(s0_2)) = sigma_th_GPS;
 
 obj_ground_est = zeros(length(s0_obj),length(t));
 obj_robot1_est = zeros(length(s0_obj),length(t));
@@ -184,8 +186,8 @@ for i=1:length(t)-1
     pGPS1 = rand(1);                                                 % probability to have GPS information
     if (pGPS1 <= ProbGPS)
         H = eye(3);                                                  % z_k = H*Sk
-        InnCov = H*P1pred*H' + sigma_GPS^2;                          % Covariance of Innovation
-        W = P1pred*H'/InnCov;                                   % KF gain
+        InnCov = H*P1pred*H' + P1Store{1};                           % Covariance of Innovation
+        W = P1pred*H'/InnCov;                                        % KF gain
         s_r1_est(:,i+1) = S1EstPred + W*(s_1GPS(:,i+1)-H*S1EstPred); % Updated state estimate
         P1 = (eye(length(s0_1))-W*H)*P1pred;                         % Updated covariance matrix
     else
@@ -208,8 +210,8 @@ for i=1:length(t)-1
     pGPS2 = rand(1);                                                 % probability to have GPS information
     if (pGPS2 <= ProbGPS)
         H = eye(3);                                                  % z_k = H*Sk
-        InnCov = H*P2pred*H' + sigma_GPS^2;                          % Covariance of Innovation
-        W = P2pred*H'/InnCov;                                   % KF gain
+        InnCov = H*P2pred*H' + P2Store{1};                           % Covariance of Innovation
+        W = P2pred*H'/InnCov;                                        % KF gain
         s_r2_est(:,i+1) = S2EstPred + W*(s_2GPS(:,i+1)-H*S2EstPred); % Updated state estimate
         P2 = (eye(length(s0_2))-W*H)*P2pred;                         % Updated covariance matrix
     else
@@ -245,7 +247,7 @@ for i=1:length(t)-1
     
     if i >= 20
         tmp_sigma_Err = 0;
-        while abs(tmp_sigma_Err) < 0.1       
+        while abs(tmp_sigma_Err) < 0.1     
         j = randi([10,i]);
         tmp_sigma_Err = s_r1_est(3,i+1) - s_r1_est(3, j) + cameraSensor(1,i+1) - cameraSensor(1,j);
         end
@@ -259,9 +261,9 @@ for i=1:length(t)-1
     [mu_Err(1,i),sigma_Err(1,i)] = PropError(xA,varlist,valuelist,errlist);
     [mu_Err(2,i),sigma_Err(2,i)] = PropError(yA,varlist,valuelist,errlist);
 
-    if i >= 15
+    if i >= 20
         tmp_sigma_Err = 0;
-        while abs(tmp_sigma_Err) < 0.1       
+        while abs(tmp_sigma_Err) < 0.07       
         j = randi([7,i]);
         tmp_sigma_Err = s_r2_est(3,i+1) - s_r2_est(3, j) + cameraSensor(2,i+1) - cameraSensor(2,j);
         end

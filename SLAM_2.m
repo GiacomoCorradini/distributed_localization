@@ -136,17 +136,17 @@ xlim([-40 40])
 ylim([-40 40])
 
 
-for i = 1:3:length(t)-1
-    for j = 1:length(obj)    
+for i = 1:3:length(t)-1  
         phi2 = s_r2(3,i) - s_r1(3,i);
-    
-        plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
-                      obj{j}(1),obj{j}(2),camera_cell{j}(1,i),camera_cell{j}(2,i),color(j),color(j+10));
+        for j = 1:length(obj)
+        [p1(j), p2(j)] = plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
+                      obj{j}(1),obj{j}(2),camera_cell{j}(1,i),camera_cell{j}(2,i),color(j),color(j+10), j);
      
         drawnow
+        end
+        if ~isempty(p1), delete(p1), end
+        if ~isempty(p2), delete(p2), end
         disp(['Iter', num2str(i)])
-    
-    end
 end
 
 %% Sensors uncertainty

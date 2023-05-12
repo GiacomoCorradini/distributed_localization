@@ -15,7 +15,7 @@ to_rad = pi/180;
 addpath('functions/')
 obj_sol;
 
-FoV = 45*to_rad;
+FoV = 60*to_rad;
 
 %% State initialization
 
@@ -32,7 +32,7 @@ theta2 = randi([-180 180])*to_rad;   % theta coordinate1
 s0_2 = [x2; y2; theta2];             % state of robot 2
 
 % objects position
-n_obj = 10;                          % number of object
+n_obj = 5;                          % number of object
 obj = cell(1,n_obj);
 for i = 1:length(obj)
     s0_obj = [randi([-20 20]); randi([-20 20])];  % state of robot 2 [x, y]
@@ -46,18 +46,18 @@ title('Object position');
 xlim([-50 50])
 ylim([-50 50])
 for i = 1:length(obj)
-    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',30);
+    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',30, 'Color',color(i));
 end
 
 %% Create dataset of robot position + camera measurement
 
 u_1 = [3*sin(t/10);
        3*cos(t/10);
-       sin(t/5).*cos(t/4)*1.5];             % velocity of robot 1
+       sin(t/5).*cos(t/4)*0];             % velocity of robot 1
 
 u_2 = [3*cos(t/10);
        -3*sin(t/10);
-       sin(t/5).*cos(t/4)*1.5];             % velocity of robot 2
+       sin(t/5).*cos(t/4)*0];             % velocity of robot 2
 
 % Cell array of cameras
 camera_cell = cell(1,n_obj);
@@ -132,16 +132,16 @@ figure('Name','Robots positions'), clf, hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
 title('Robot position in time');
-xlim([-50 50])
-ylim([-50 50])
+xlim([-40 40])
+ylim([-40 40])
 
 
-for i = 1:length(t)-1
+for i = 1:3:length(t)-1
     for j = 1:length(obj)    
         phi2 = s_r2(3,i) - s_r1(3,i);
     
         plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
-                      obj_ground_cell{j}(1,cT),obj_ground_cell{j}(2,cT),camera_cell{j}(1,i),camera_cell{j}(2,i),color(j));
+                      obj{j}(1),obj{j}(2),camera_cell{j}(1,i),camera_cell{j}(2,i),color(j),color(j+10));
      
         drawnow
         disp(['Iter', num2str(i)])

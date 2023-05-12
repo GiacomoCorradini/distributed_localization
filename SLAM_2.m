@@ -12,8 +12,10 @@ t = 0:Dt:20;
 to_rad = pi/180;
 
 % include distributed_localization folder
-addpath('../')
+addpath('functions/')
 obj_sol;
+
+FoV = 45*to_rad;
 
 %% State initialization
 
@@ -29,10 +31,23 @@ y2 = randi([-20 20]);                % y coordinate
 theta2 = randi([-180 180])*to_rad;   % theta coordinate1
 s0_2 = [x2; y2; theta2];             % state of robot 2
 
-% object position
-obj_x = randi([-20 20]);             % x coordinate
-obj_y = randi([-20 20]);             % y coordinate
-s0_obj = [obj_x; obj_y];             % state of robot 2
+% objects position
+n_obj = 10;                          % number of object
+obj = cell(1,n_obj);
+for i = 1:length(obj)
+    s0_obj = [randi([-20 20]); randi([-20 20])];  % state of robot 2 [x, y]
+    obj{i} = s0_obj;
+end
+
+figure('Name','Object position'), clf, hold on, axis equal;
+xlabel( 'x [m]' );
+ylabel( 'y [m]' );
+title('Object position');
+xlim([-50 50])
+ylim([-50 50])
+for i = 1:length(obj)
+    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',30);
+end
 
 %% Create dataset of robot position + camera measurement
 
@@ -44,16 +59,30 @@ u_2 = [3*cos(t/10);
        -3*sin(t/10);
        sin(t/5).*cos(t/4)*1.5];             % velocity of robot 2
 
+% Cell array of cameras
+camera_cell = cell(1,n_obj);
+
 % Initialize array to store the value 
 s_r1       = zeros(length(s0_1),length(t));
 s_r2       = zeros(length(s0_2),length(t));
-s_camera   = zeros(2,length(t));
+
+for i = 1:length(obj)
+    camera_cell{i} = NaN(2,length(t));
+end
 
 % Store the initial value
 s_r1(:,1) = s0_1;
 s_r2(:,1) = s0_2;
-camera_0 = [cam_data(s0_1,s0_obj);cam_data(s0_2,s0_obj)];
-s_camera(:,1) = camera_0;
+
+for i = 1:length(obj)
+    tmp1 = cam_data(s0_1,obj{i});
+    tmp2 = cam_data(s0_2,obj{i});
+    if abs(tmp1) < FoV
+        camera_cell{i}(1,1) = tmp1;
+    elseif abs(tmp2) < FoV
+        camera_cell{i}(2,1) = tmp2;
+    end
+end
 
 for cT=1:length(t)-1
         
@@ -62,24 +91,39 @@ for cT=1:length(t)-1
     s_r2(:,cT+1) = RobotDynamic(s_r2(:,cT),u_2(:,cT),Dt);
 
     % Camera dynamic update
-    s_camera(1,cT+1) = cam_data(s_r1(:,cT+1),s0_obj);
-    s_camera(2,cT+1) = cam_data(s_r2(:,cT+1),s0_obj);
-
+    for i = 1:length(obj)
+        tmp1 = cam_data(s_r1(:,cT+1),obj{i});
+        tmp2 = cam_data(s_r2(:,cT+1),obj{i});
+        if abs(tmp1) < FoV
+            camera_cell{i}(1,cT+1) = tmp1;
+        end
+        if abs(tmp2) < FoV
+            camera_cell{i}(2,cT+1) = tmp2;
+        end
+%         camera_cell{i}(:,cT+1) = [cam_data(s_r1(:,cT+1),obj{i}); cam_data(s_r2(:,cT+1),obj{i})];
+    end
 end
 
 %% Calculate exact position of the robot
 
-obj_ground = zeros(length(s0_obj),length(t));
-obj_robot1 = zeros(length(s0_obj),length(t));
+obj_ground_cell = cell(1,n_obj);
+obj_robot1_cell = cell(1,n_obj);
 
-for cT=1:length(t)
-        
-    % calculate the position of the object for each time step
-    phi2 = s_r2(3,cT) - s_r1(3,cT);
-    [obj_ground(1,cT),obj_ground(2,cT),obj_robot1(1,cT),obj_robot1(2,cT)] = ...
-     object_detection(s_r1(1,cT),s_r1(2,cT),s_r1(3,cT),s_r2(1,cT),s_r2(2,cT),...
-     phi2,s_camera(1,cT),s_camera(2,cT));
+for i = 1:length(obj)
+    obj_ground_cell{i} = zeros(length(s0_obj),length(t));
+    obj_robot1_cell{i} = zeros(length(s0_obj),length(t));
+end
 
+for i = 1:length(obj)
+    for cT=1:length(t)
+            
+        % calculate the position of the object for each time step
+        phi2 = s_r2(3,cT) - s_r1(3,cT);
+        [obj_ground_cell{i}(1,cT),obj_ground_cell{i}(2,cT),obj_robot1_cell{i}(1,cT),obj_robot1_cell{i}(2,cT)] = ...
+         object_detection(s_r1(1,cT),s_r1(2,cT),s_r1(3,cT),s_r2(1,cT),s_r2(2,cT),...
+         phi2,camera_cell{i}(1,cT),camera_cell{i}(2,cT));
+    
+    end
 end
 
 % PLots real dynamics without uncertainty
@@ -91,15 +135,18 @@ title('Robot position in time');
 xlim([-50 50])
 ylim([-50 50])
 
+
 for i = 1:length(t)-1
-
-    phi2 = s_r2(3,i) - s_r1(3,i);
-
-    plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
-                  obj_ground(1,cT),obj_ground(2,cT),s_camera(1,i),s_camera(2,i));
- 
-    drawnow
-
+    for j = 1:length(obj)    
+        phi2 = s_r2(3,i) - s_r1(3,i);
+    
+        plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
+                      obj_ground_cell{j}(1,cT),obj_ground_cell{j}(2,cT),camera_cell{j}(1,i),camera_cell{j}(2,i),color(j));
+     
+        drawnow
+        disp(['Iter', num2str(i)])
+    
+    end
 end
 
 %% Sensors uncertainty

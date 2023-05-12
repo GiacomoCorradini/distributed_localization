@@ -95,7 +95,7 @@ for i = 1:3:length(t)-1
 
     phi2 = s_r2(3,i) - s_r1(3,i);
 
-    plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
+    [~,~] = plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
                   obj_ground(1,cT),obj_ground(2,cT),s_camera(1,i),s_camera(2,i), color(1), color(11));
  
     drawnow
@@ -247,7 +247,7 @@ for i=1:length(t)-1
     
     if i >= 20
         tmp_sigma_Err = 0;
-        while abs(tmp_sigma_Err) < 0.1     
+        while abs(tmp_sigma_Err) < 0.05     
         j = randi([10,i]);
         tmp_sigma_Err = s_r1_est(3,i+1) - s_r1_est(3, j) + cameraSensor(1,i+1) - cameraSensor(1,j);
         end
@@ -263,7 +263,7 @@ for i=1:length(t)-1
 
     if i >= 20
         tmp_sigma_Err = 0;
-        while abs(tmp_sigma_Err) < 0.07       
+        while abs(tmp_sigma_Err) < 0.05       
         j = randi([7,i]);
         tmp_sigma_Err = s_r2_est(3,i+1) - s_r2_est(3, j) + cameraSensor(2,i+1) - cameraSensor(2,j);
         end

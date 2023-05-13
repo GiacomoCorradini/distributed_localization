@@ -20,15 +20,15 @@ FoV = 60*to_rad;
 %% State initialization
 
 % robot 1 initial position
-x1 = randi([-20 20]);                % x coordinate
-y1 = randi([-20 20]);                % y coordinate
-theta1 = randi([-180 180])*to_rad;   % theta coordinate
+x1 = -30;%randi([-20 20]);                % x coordinate
+y1 = -30;%randi([-20 20]);                % y coordinate
+theta1 = 0; randi([-180 180])*to_rad;   % theta coordinate
 s0_1 = [x1; y1; theta1];             % state of robot 1
 
 % robot 2 initial position
-x2 = randi([-20 20]);                % x coordinate
-y2 = randi([-20 20]);                % y coordinate
-theta2 = randi([-180 180])*to_rad;   % theta coordinate1
+x2 = 30;%randi([-20 20]);                % x coordinate
+y2 = 30;%randi([-20 20]);                % y coordinate
+theta2 = -135*to_rad;%randi([-180 180])*to_rad;   % theta coordinate1
 s0_2 = [x2; y2; theta2];             % state of robot 2
 
 % objects position
@@ -51,13 +51,13 @@ end
 
 %% Create dataset of robot position + camera measurement
 
-u_1 = [3*sin(t/10);
-       3*cos(t/10);
-       sin(t/5).*cos(t/4)*0];             % velocity of robot 1
+u_1 = [0*sin(t/10);
+       3*cos(t/20);
+       sin(t/5).*cos(t/4)*0.5];             % velocity of robot 1
 
-u_2 = [3*cos(t/10);
-       -3*sin(t/10);
-       sin(t/5).*cos(t/4)*0];             % velocity of robot 2
+u_2 = [-3*cos(t/20);
+       0*sin(t/10);
+       sin(t/5).*cos(t/4)*0.5];             % velocity of robot 2
 
 % Cell array of cameras
 camera_cell = cell(1,n_obj);
@@ -85,7 +85,16 @@ for i = 1:length(obj)
 end
 
 for cT=1:length(t)-1
-        
+    
+    if cT > 2
+    if sum(~isnan(cellfun(@(v)v(1,cT),camera_cell))) <  sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
+     u_1(3, cT) = -2*u_1(3, cT-1);
+    end  
+
+    if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
+     u_2(3, cT) = -2*u_2(3, cT-1);
+    end
+    end
     % Robot dynamic update
     s_r1(:,cT+1) = RobotDynamic(s_r1(:,cT),u_1(:,cT),Dt);
     s_r2(:,cT+1) = RobotDynamic(s_r2(:,cT),u_2(:,cT),Dt);
@@ -102,6 +111,8 @@ for cT=1:length(t)-1
         end
 %         camera_cell{i}(:,cT+1) = [cam_data(s_r1(:,cT+1),obj{i}); cam_data(s_r2(:,cT+1),obj{i})];
     end
+    
+
 end
 
 %% Calculate exact position of the robot
@@ -146,7 +157,7 @@ for i = 1:3:length(t)-1
         end
         if ~isempty(p1), delete(p1), end
         if ~isempty(p2), delete(p2), end
-        disp(['Iter', num2str(i)])
+        disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_cell)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_cell))))])
 end
 
 %% Sensors uncertainty
@@ -155,21 +166,23 @@ end
 % CAMERA -> give the angle between the forward axis and the line passing
 % through the center of the robot and the object
 mu_camera = 0;        % mean value -> 0 means calibrated
-sigma_camera = 0;  % variance
+sigma_camera = 10e-3;  % variance
 
-cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
+for i = 1:length(camera_cell)
+    cameraSensor{i} = camera_cell{i} + randn(2,length(camera_cell{i}))*sigma_camera + mu_camera*ones(2,length(camera_cell{i}));
+end
 
 % -------------------------------------------------------------------------
-% GPS -> give the position and orientation of the robot2
-mu_GPS = 0;           % mean value -> 0 means calibrated
-sigma_GPS = 1e-2;     % variance
-mu_th_GPS = 0;           % mean value -> 0 means calibrated
-sigma_th_GPS = 1e-3;     % variance
-
-s_1GPS(1:2,:) = s_r1(1:2,:) + randn(2,length(s_r1)).*sigma_GPS + mu_GPS.*ones(2,length(s_r1));
-s_2GPS(1:2,:) = s_r2(1:2,:) + randn(2,length(s_r2)).*sigma_GPS + mu_GPS.*ones(2,length(s_r2));
-s_1GPS(3,:)   = s_r1(3,:)   + randn(1,length(s_r1)).*sigma_th_GPS + mu_th_GPS.*ones(1,length(s_r1));
-s_2GPS(3,:)   = s_r2(3,:)   + randn(1,length(s_r2)).*sigma_th_GPS + mu_th_GPS.*ones(1,length(s_r2));
+% % GPS -> give the position and orientation of the robot2
+% mu_GPS = 0;           % mean value -> 0 means calibrated
+% sigma_GPS = 1e-2;     % variance
+% mu_th_GPS = 0;           % mean value -> 0 means calibrated
+% sigma_th_GPS = 1e-3;     % variance
+% 
+% s_1GPS(1:2,:) = s_r1(1:2,:) + randn(2,length(s_r1)).*sigma_GPS + mu_GPS.*ones(2,length(s_r1));
+% s_2GPS(1:2,:) = s_r2(1:2,:) + randn(2,length(s_r2)).*sigma_GPS + mu_GPS.*ones(2,length(s_r2));
+% s_1GPS(3,:)   = s_r1(3,:)   + randn(1,length(s_r1)).*sigma_th_GPS + mu_th_GPS.*ones(1,length(s_r1));
+% s_2GPS(3,:)   = s_r2(3,:)   + randn(1,length(s_r2)).*sigma_th_GPS + mu_th_GPS.*ones(1,length(s_r2));
 
 % -------------------------------------------------------------------------
 % INPUT -> input velocity of the robot

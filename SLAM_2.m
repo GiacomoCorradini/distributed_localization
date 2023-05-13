@@ -66,7 +66,7 @@ camera_cell = cell(1,n_obj);
 s_r1       = zeros(length(s0_1),length(t));
 s_r2       = zeros(length(s0_2),length(t));
 
-for i = 1:length(obj)
+for i = 1:(length(obj)+2)
     camera_cell{i} = NaN(2,length(t));
 end
 
@@ -79,22 +79,33 @@ for i = 1:length(obj)
     tmp2 = cam_data(s0_2,obj{i});
     if abs(tmp1) < FoV
         camera_cell{i}(1,1) = tmp1;
-    elseif abs(tmp2) < FoV
+    end   
+    if abs(tmp2) < FoV
         camera_cell{i}(2,1) = tmp2;
     end
+end
+
+tmp1 = cam_data(s0_1,s0_2);
+tmp2 = cam_data(s0_2,s0_1);
+if abs(tmp1) < FoV
+    camera_cell{n_obj+1}(1,1) = tmp1;
+end
+if abs(tmp2) < FoV
+    camera_cell{n_obj+1}(2,1) = tmp2;
 end
 
 for cT=1:length(t)-1
     
     if cT > 2
-    if sum(~isnan(cellfun(@(v)v(1,cT),camera_cell))) <  sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
-     u_1(3, cT) = -2*u_1(3, cT-1);
-    end  
+        if sum(~isnan(cellfun(@(v)v(1,cT),camera_cell))) <  sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
+        u_1(3, cT) = -2*u_1(3, cT-1);
+        end  
 
-    if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
-     u_2(3, cT) = -2*u_2(3, cT-1);
+        if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
+        u_2(3, cT) = -2*u_2(3, cT-1);
+        end
     end
-    end
+
     % Robot dynamic update
     s_r1(:,cT+1) = RobotDynamic(s_r1(:,cT),u_1(:,cT),Dt);
     s_r2(:,cT+1) = RobotDynamic(s_r2(:,cT),u_2(:,cT),Dt);
@@ -111,7 +122,16 @@ for cT=1:length(t)-1
         end
 %         camera_cell{i}(:,cT+1) = [cam_data(s_r1(:,cT+1),obj{i}); cam_data(s_r2(:,cT+1),obj{i})];
     end
+
     
+    tmp1 = cam_data(s_r1(:,cT+1),s_r2(:,cT+1));
+    tmp2 = cam_data(s_r2(:,cT+1),s_r1(:,cT+1));
+    if abs(tmp1) < FoV
+       camera_cell{n_obj+1}(1,cT+1) = tmp1;
+    end
+    if abs(tmp2) < FoV
+       camera_cell{n_obj+1}(2,cT+1) = tmp2;
+    end
 
 end
 
@@ -150,10 +170,11 @@ ylim([-40 40])
 for i = 1:3:length(t)-1  
         phi2 = s_r2(3,i) - s_r1(3,i);
         for j = 1:length(obj)
-        [p1(j), p2(j)] = plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
-                      obj{j}(1),obj{j}(2),camera_cell{j}(1,i),camera_cell{j}(2,i),color(j),color(j+10), j);
-     
+        [p1(j), p2(j), p11, p22] = plot_location2(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
+                      obj{j}(1),obj{j}(2),camera_cell{j}(1,i),camera_cell{j}(2,i),color(j),color(j+10), camera_cell{n_obj+1}(:,i));
         drawnow
+        if ~isempty(p11), delete(p11), end
+        if ~isempty(p22), delete(p22), end
         end
         if ~isempty(p1), delete(p1), end
         if ~isempty(p2), delete(p2), end

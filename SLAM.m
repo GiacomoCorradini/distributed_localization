@@ -38,11 +38,11 @@ s0_obj = [obj_x; obj_y];             % state of robot 2
 
 u_1 = [3*sin(t/10);
        3*cos(t/10);
-       sin(t/5).*cos(t/4)*0];             % velocity of robot 1
+       sin(t/5).*cos(t/4)*0.5];             % velocity of robot 1
 
 u_2 = [3*cos(t/10);
        -3*sin(t/10);
-       sin(t/5).*cos(t/4)*0];             % velocity of robot 2
+       sin(t/5).*cos(t/4)*0.5];             % velocity of robot 2
 
 % Initialize array to store the value 
 s_r1       = zeros(length(s0_1),length(t));

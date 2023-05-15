@@ -10,11 +10,13 @@ t = 0:Dt:20;
 
 % convert degree to radiant
 to_rad = pi/180;
+to_deg = 1/to_rad;
 
 % include distributed_localization folder
 addpath('functions/')
 obj_sol;
 
+% Camera field of view
 FoV = 60*to_rad;
 
 %% State initialization
@@ -22,7 +24,7 @@ FoV = 60*to_rad;
 % robot 1 initial position
 x1 = -30;%randi([-20 20]);                % x coordinate
 y1 = -30;%randi([-20 20]);                % y coordinate
-theta1 = 0; randi([-180 180])*to_rad;   % theta coordinate
+theta1 = 0; %randi([-180 180])*to_rad;   % theta coordinate
 s0_1 = [x1; y1; theta1];             % state of robot 1
 
 % robot 2 initial position
@@ -32,7 +34,7 @@ theta2 = -135*to_rad;%randi([-180 180])*to_rad;   % theta coordinate1
 s0_2 = [x2; y2; theta2];             % state of robot 2
 
 % objects position
-n_obj = 5;                          % number of object
+n_obj = 5;                          % number of objects
 obj = cell(1,n_obj);
 for i = 1:length(obj)
     s0_obj = [randi([-20 20]); randi([-20 20])];  % state of robot 2 [x, y]
@@ -46,7 +48,7 @@ title('Object position');
 xlim([-50 50])
 ylim([-50 50])
 for i = 1:length(obj)
-    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',30, 'Color',color(i));
+    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',30,'Color',color(i));
 end
 
 %% Create dataset of robot position + camera measurement
@@ -63,8 +65,8 @@ u_2 = [-3*cos(t/20);
 camera_cell = cell(1,n_obj);
 
 % Initialize array to store the value 
-s_r1       = zeros(length(s0_1),length(t));
-s_r2       = zeros(length(s0_2),length(t));
+s_r1 = zeros(length(s0_1),length(t));
+s_r2 = zeros(length(s0_2),length(t));
 
 for i = 1:(length(obj)+2)
     camera_cell{i} = NaN(2,length(t));

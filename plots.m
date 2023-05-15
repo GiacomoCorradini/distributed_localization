@@ -30,10 +30,12 @@ legend('Robot1','Robot2')
 xlabel('t [s]'); ylabel('theta [deg]');
 
 figure('Name','Obj Error'), clf, hold on;
-plot(t, mu_Err(1,:) - obj_ground(1,:));
-plot(t, mu_Err(2,:) - obj_ground(2,:));
-plot(t, mu_Err(3,:) - obj_ground(1,:));
-plot(t, mu_Err(4,:) - obj_ground(2,:));
+for i=1:length(t)
+    plot(t, obj_est{1,i}(1) - obj_ground(1,:));
+    plot(t, obj_est{1,i}(2) - obj_ground(2,:));
+    plot(t, obj_est{2,i}(1) - obj_ground(1,:));
+    plot(t, obj_est{2,i}(2) - obj_ground(2,:));
+end
 title('Obj Error');
 xlim([0, t(end-1)])
 legend('x error robot 1','y error robot 1','x error robot 2','y error robot 2')
@@ -47,12 +49,14 @@ xlabel('t [s]'); ylabel('err [m]');
 % xlabel('t [s]'); ylabel('err [m]');
 
 figure('Name','Dev std'), clf, hold on;
-plot(t, sigma_Err(1,:));
-plot(t, sigma_Err(2,:));
-plot(t, sigma_Err(3,:));
-plot(t, sigma_Err(4,:));
+for i=1:length(t)
+    plot(t, p_est_err{1,i}(1));
+    plot(t, p_est_err{1,i}(2));
+    plot(t, p_est_err{2,i}(1));
+    plot(t, p_est_err{2,i}(2));
+end
 title('Dev std');
-legend('dev std xA-r1','dev std yA-r1','dev std xA-r2','dev std yA-r2')
+legend('dev std obj_x-r1','dev std obj_y-r1','dev std obj_x-r2','dev std obj_y-r2')
 xlabel('t [s]'); ylabel('[m]');
 
 figure('Name','Est obj'), clf, hold on;

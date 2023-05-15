@@ -109,29 +109,53 @@ end
 % CAMERA -> give the angle between the forward axis and the line passing
 % through the center of the robot and the object
 mu_camera    = 0;     % mean value -> 0 means calibrated
-sigma_camera = 1e-2;  % variance
 
+sigma_camera = 1e-4;  % variance
 cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
+
+% % % Uncertainty
+% % R_camera = 1e-3*(rand(2,2)-0.5);
+% % R_camera = R_camera*R_camera';
+% % 
+% % cameraSensor = s_camera + mvnrnd([0;0], R_camera)' + mu_camera;
 
 % -------------------------------------------------------------------------
 % GPS -> give the position and orientation of the robot2
 mu_GPS = 0;           % mean value -> 0 means calibrated
+
 sigma_GPS = 1e-2;     % variance of [x,y]
-sigma_th_GPS = 0;     % variance of [theta]
+sigma_th_GPS = 1e-4;  % variance of [theta]
 R_GPS = [sigma_GPS,     0 ,         0;
             0,      sigma_GPS,      0;
-            0,          0,     sigma_th_GPS ];
+            0,          0,     sigma_th_GPS];
 
 s_1GPS = s_r1 + (randn(3,length(s_r1))'*R_GPS)' + mu_GPS;
 s_2GPS = s_r2 + (randn(3,length(s_r2))'*R_GPS)' + mu_GPS;
 
+% % % Uncertainty
+% % R_GPS = 1e-3*(rand(3,3)-0.5);
+% % R_GPS = R_GPS*R_GPS';
+% % 
+% % s_1GPS = s_r1 + mvnrnd([0;0;0], R_GPS)' + mu_GPS;
+% % s_2GPS = s_r2 + mvnrnd([0;0;0], R_GPS)' + mu_GPS;
+
 % -------------------------------------------------------------------------
 % INPUT -> input velocity of the robot
-mu_u = zeros(3,1);    % mean value -> 0 means calibrated
-sigma_u = 1e-2;       % covariance
+mu_u = 0;    % mean value -> 0 means calibrated
+
+sigma_u = 1e-2;       % variance
 
 u_1bar = u_1 + randn(3,length(u_1)).*sigma_u + mu_u.*ones(3,length(s_r1));
 u_2bar = u_2 + randn(3,length(u_2)).*sigma_u + mu_u.*ones(3,length(s_r1));
+
+% % % Input uncertainty
+% % Qi = 1e-3*(rand(3,3)-0.5);
+% % Qi = Qi*Qi';
+% % 
+% % u_1bar = u_1 + mvnrnd([0;0;0], Qi)' + mu_u;
+% % u_2bar = u_2 + mvnrnd([0;0;0], Qi)' + mu_u;
+
+%% Plot uncertainty
 
 figure('Name','Camera noise'), clf, hold on;
 plot(t, cameraSensor(1,:) - s_camera(1,:));
@@ -144,7 +168,7 @@ figure('Name','GPS noise robot 1'), clf, hold on;
 plot(t, s_1GPS(1,:) - s_r1(1,:));
 plot(t, s_1GPS(2,:) - s_r1(2,:));
 plot(t, s_1GPS(3,:) - s_r1(3,:));
-title('Camera noise');
+title('GPS noise robot 1');
 legend('noise x GPS','noise y GPS','noise theta GPS')
 xlabel('t [s]'); ylabel('noise [m]/[deg]');
 
@@ -152,7 +176,7 @@ figure('Name','GPS noise robot 2'), clf, hold on;
 plot(t, s_2GPS(1,:) - s_r2(1,:));
 plot(t, s_2GPS(2,:) - s_r2(2,:));
 plot(t, s_2GPS(3,:) - s_r2(3,:));
-title('Camera noise');
+title('GPS noise robot 2');
 legend('noise x GPS','noise y GPS','noise theta GPS')
 xlabel('t [s]'); ylabel('noise [m]/[deg]');
 
@@ -163,7 +187,7 @@ s_camera_est = zeros(length(camera_0),length(t));
 Pcam = 10^2*eye(length(camera_0));        % our knowledge about the initial position of the robot 1
 
 % GPS
-ProbGPS = 0.9;
+ProbGPS = 0.9;  % probability to have GPS signal
 
 s_r1_est = zeros(length(s0_1),length(t));
 s_r1_est(:,1) = s_1GPS(:,1);
@@ -191,11 +215,12 @@ for i = 1:length(t)
     end
 end
 
-%%
 for i=1:length(t)-1
-    %% Robot 1
     
     fprintf('Iter %d\n',i)
+
+    %% Robot 1
+       
     % Prediction step
     % s_k+1 = A*s_k + B*u_k
     A = eye(3);
@@ -207,7 +232,7 @@ for i=1:length(t)-1
     pGPS1 = rand(1);                                                 % probability to have GPS information
     if (pGPS1 <= ProbGPS)
         H = eye(3);                                                  % z_k = H*Sk
-        InnCov = H*P1pred*H' + R_GPS;                           % Covariance of Innovation
+        InnCov = H*P1pred*H' + R_GPS^2;                              % Covariance of Innovation
         W = P1pred*H'/InnCov;                                        % KF gain
         s_r1_est(:,i+1) = S1EstPred + W*(s_1GPS(:,i+1)-H*S1EstPred); % Updated state estimate
         P1 = (eye(length(s0_1))-W*H)*P1pred;                         % Updated covariance matrix
@@ -231,7 +256,7 @@ for i=1:length(t)-1
     pGPS2 = rand(1);                                                 % probability to have GPS information
     if (pGPS2 <= ProbGPS)
         H = eye(3);                                                  % z_k = H*Sk
-        InnCov = H*P2pred*H' + R_GPS;                           % Covariance of Innovation
+        InnCov = H*P2pred*H' + R_GPS^2;                              % Covariance of Innovation
         W = P2pred*H'/InnCov;                                        % KF gain
         s_r2_est(:,i+1) = S2EstPred + W*(s_2GPS(:,i+1)-H*S2EstPred); % Updated state estimate
         P2 = (eye(length(s0_2))-W*H)*P2pred;                         % Updated covariance matrix
@@ -243,28 +268,6 @@ for i=1:length(t)-1
     P2Store{i+1} = P2;
  
     %% Object detection robot 1
-    
-    % calculate the position of the object for each time step
-%     index = randi([1 i]); 
-%     phi1 = s_r1_est(3,i+1) - s_r1_est(3,index);
-%     [obj_ground_est(1,i),obj_ground_est(2,i),obj_robot1_est(1,i),obj_robot1_est(2,i)] = ...
-%      object_detection(s_r1_est(1,index),s_r1_est(2,index),s_r1_est(3,index),s_r1_est(1,i+1),s_r1_est(2,i+1),...
-%      phi1,s_camera(1,i),s_camera(1,i+1));
-
-    % the error must be propagate
-
-%     for j = 1:i
-%         valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
-%                  cameraSensor(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
-%         errlist = [sqrt(P1Store{j}(1,1)),sqrt(P1Store{j}(2,2)),sqrt(P1Store{j}(3,3)),sigma_camera,...
-%                    sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera];
-%         [~,tmp_sigma_Err] = PropError(xA,varlist,valuelist,errlist);
-% %         [~,tmp_sigma_Err] = PropError(yA,varlist,valuelist,errlist);
-%         if tmp_sigma_Err < tmp || j == 1
-%             index = j;
-%             tmp = tmp_sigma_Err;
-%         end
-%     end
     
     if i >= 20
         tmp_sigma_Err = 0;
@@ -282,6 +285,8 @@ for i=1:length(t)-1
     [obj_est{1,i}(1),p_est_err{1,i}(1)] = PropError(obj_x_sol,varlist,valuelist,errlist);
     [obj_est{1,i}(2),p_est_err{1,i}(2)] = PropError(obj_y_sol,varlist,valuelist,errlist);
 
+    %% Object detection robot 2
+
     if i >= 20
         tmp_sigma_Err = 0;
         while abs(tmp_sigma_Err) < 0.05       
@@ -298,120 +303,103 @@ for i=1:length(t)-1
     [obj_est{2,i}(1),p_est_err{2,i}(1)] = PropError(obj_x_sol,varlist,valuelist,errlist);
     [obj_est{2,i}(2),p_est_err{2,i}(2)] = PropError(obj_y_sol,varlist,valuelist,errlist);
 
-%     %% Object detection robot 2
-%     
-%     % calculate the position of the object for each time step
-%     phi2 = s_r2(3,cT) - s_r1(3,cT);
-%     [obj_ground(1,cT),obj_ground(2,cT),obj_robot1(1,cT),obj_robot1(2,cT)] = ...
-%      object_detection(s_r1(1,cT),s_r1(2,cT),s_r1(3,cT),s_r2(1,cT),s_r2(2,cT),...
-%      phi2,s_camera(1,cT),s_camera(2,cT));
-% 
-%     % the error must be propagate
-
-
-%     valuelist = [s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),...
-%                  cameraSensor(1,i+1),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(2,i+1)];
-%     errlist = [sqrt(P1Store{i+1}(1,1)),sqrt(P1Store{i+1}(2,2)),sqrt(P1Store{i+1}(3,3)),sigma_camera,...
-%                sqrt(P2Store{i+1}(1,1)),sqrt(P2Store{i+1}(1,1)),sqrt(P2Store{i+1}(1,1)),sigma_camera];
-%     [mu_Err2(1,i),sigma_Err2(1,i)] = PropError(xA,varlist,valuelist,errlist);
-%     [mu_Err2(2,i),sigma_Err2(2,i)] = PropError(yA,varlist,valuelist,errlist);
 end
 
 %% Centralised WLS
 
-n_meas = length(t);
-n_sens = 2;
+% initialize
 p_hat = zeros(2,length(t));
 
-for j = 1:n_meas-1
+for j = 1:length(t)-1
     H = [];
     R = [];
     Z = [];
-    for i=1:n_sens
-        R_new = [p_est_err{i,j}(1).^2, 0;
-                 0, p_est_err{i,j}(2).^2];
+    for i=1:2
+        R_new = [p_est_err{i,j}(1).^2,            0;
+                        0,              p_est_err{i,j}(2).^2];
         R = blkdiag(R,R_new);
         H = [H; eye(2)];
         Z = [Z; obj_est{i,j}];
     end
-
     p_hat(:,j) = inv(H'*inv(R)*H)*H'*inv(R)*Z;
 end
 
-figure
-plot(p_hat(1,:),p_hat(2,:),'.')
-
 %% Distributed WLS
 
-% initialize each sensor
-F = cell(n_sens,1);
-a = cell(n_sens,1);
-F_MH = cell(n_sens,1);
-a_MH = cell(n_sens,1);
-for i=1:n_sens
-    Hi = eye(2);
-    Ri = [p_est_err{i,j}(1).^2, 0;
-                 0, p_est_err{i,j}(2).^2];
-    zi = obj_est{i,1};
-    F{i} = Hi'*inv(Ri)*Hi;
-    a{i} = Hi'*inv(Ri)*zi;
-    F_MH{i} = Hi'*inv(Ri)*Hi;
-    a_MH{i} = Hi'*inv(Ri)*zi;
-end
+% Storing the estimates
+n_sens = 2;
+p_est_distr = cell(2,length(t));
+p_est_distr_MH = cell(2,length(t));
 
-% Number of consensus protocol msg exchanges
-m = 10;
-
-for k=1:m
-    % Topology matrix
-    A = zeros(n_sens,n_sens);
-    ProbOfConnection = 0.5;
+for cT = 1:length(t)-1
+    % initialize each sensor
+    F = cell(n_sens,1);
+    a = cell(n_sens,1);
+    F_MH = cell(n_sens,1);
+    a_MH = cell(n_sens,1);
     for i=1:n_sens
-        for j=i+1:n_sens
-            A(i,j) = round(rand(1)-(0.5-ProbOfConnection));
-        end
+        Hi = eye(2);
+        Ri = [p_est_err{i,cT}(1).^2,          0;
+                    0,              p_est_err{i,cT}(2).^2];
+        zi = obj_est{i,cT};
+        F{i} = Hi'*inv(Ri)*Hi;
+        a{i} = Hi'*inv(Ri)*zi;
+        F_MH{i} = Hi'*inv(Ri)*Hi;
+        a_MH{i} = Hi'*inv(Ri)*zi;
     end
-    A = A + A';
-    
-    % Degree vector
-    D = A*ones(n_sens,1);
 
-    % Maximum Degree Waighting
-    FStore = F;
-    aStore = a;
-    for i=1:n_sens
-        for j=1:n_sens
-            if A(i,j) == 1
-                F{i} = F{i} + 1/(1+max(D))*(FStore{j} - FStore{i});
-                a{i} = a{i} + 1/(1+max(D))*(aStore{j} - aStore{i});
+    % Number of consensus protocol msg exchanges
+    m = 10;
+    
+    for k=1:m
+        % Topology matrix
+        A = zeros(n_sens,n_sens);
+        ProbOfConnection = 0.5;
+        for i=1:n_sens
+            for j=i+1:n_sens
+                A(i,j) = round(rand(1)-(0.5-ProbOfConnection));
             end
         end
-    end
+        A = A + A';
+        
+        % Degree vector
+        D = A*ones(n_sens,1);
     
-    % Metropolis-Hastings
-    FStore = F_MH;
-    aStore = a_MH;
-    for i=1:n_sens
-        for j=1:n_sens
-            if A(i,j) == 1
-                F_MH{i} = F_MH{i} + 1/(1+max(D(i), D(j)))*(FStore{j} - FStore{i});
-                a_MH{i} = a_MH{i} + 1/(1+max(D(i), D(j)))*(aStore{j} - aStore{i});
+        % Maximum Degree Waighting
+        FStore = F;
+        aStore = a;
+        for i=1:n_sens
+            for j=1:n_sens
+                if A(i,j) == 1
+                    F{i} = F{i} + 1/(1+max(D))*(FStore{j} - FStore{i});
+                    a{i} = a{i} + 1/(1+max(D))*(aStore{j} - aStore{i});
+                end
             end
         end
+        
+        % Metropolis-Hastings
+        FStore = F_MH;
+        aStore = a_MH;
+        for i=1:n_sens
+            for j=1:n_sens
+                if A(i,j) == 1
+                    F_MH{i} = F_MH{i} + 1/(1+max(D(i), D(j)))*(FStore{j} - FStore{i});
+                    a_MH{i} = a_MH{i} + 1/(1+max(D(i), D(j)))*(aStore{j} - aStore{i});
+                end
+            end
+        end
+    
     end
-
-end
-
-% Estimates
-p_hat_Distr = zeros(2, n_sens);
-for i=1:n_sens
-    p_hat_Distr(:,i) = inv(F{i})*a{i};
-end
-
-% Estimates
-p_hat_Distr_MH = zeros(2, n_sens);
-for i=1:n_sens
-    p_hat_Distr_MH(:,i) = inv(F_MH{i})*a_MH{i};
+    
+    % Estimates
+    for i=1:n_sens
+        p_est_distr{i,cT} = inv(F{i})*a{i};
+    end
+    
+    % Estimates
+    for i=1:n_sens
+        p_est_distr_MH{i,cT} = inv(F_MH{i})*a_MH{i};
+    end
 end
 
 %% PLots
@@ -422,6 +410,10 @@ plots;
 
 figure, hold on;
 plot(p_hat(1,:),p_hat(2,:),'.')
-plot(p_hat_Distr(1,:),p_hat_Distr(2,:),'o','MarkerSize',30)
-plot(p_hat_Distr_MH(1,:),p_hat_Distr_MH(2,:),'d','MarkerSize',20)
+for i=1:length(t)-1
+    plot(p_est_distr{1,i}(1),p_est_distr{2,i}(2),'o','MarkerSize',5)
+    plot(p_est_distr_MH{1,i}(1),p_est_distr_MH{2,i}(2),'d','MarkerSize',5)
+end
 plot(obj_x,obj_y,'.','MarkerSize',40)
+
+

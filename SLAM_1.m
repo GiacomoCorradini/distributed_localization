@@ -271,7 +271,7 @@ for i=1:length(t)-1
     
     if i >= 20
         tmp_sigma_Err = 0;
-        while abs(tmp_sigma_Err) < 0.05     
+        while abs(tmp_sigma_Err) < 0.02     
         j = randi([10,i]);
         tmp_sigma_Err = s_r1_est(3,i+1) - s_r1_est(3, j) + cameraSensor(1,i+1) - cameraSensor(1,j);
         end
@@ -289,7 +289,7 @@ for i=1:length(t)-1
 
     if i >= 20
         tmp_sigma_Err = 0;
-        while abs(tmp_sigma_Err) < 0.05       
+        while abs(tmp_sigma_Err) < 0.02       
         j = randi([7,i]);
         tmp_sigma_Err = s_r2_est(3,i+1) - s_r2_est(3, j) + cameraSensor(2,i+1) - cameraSensor(2,j);
         end
@@ -409,11 +409,12 @@ plots;
 %% 
 
 figure, hold on;
-plot(p_hat(1,:),p_hat(2,:),'.')
-for i=1:length(t)-1
-    plot(p_est_distr{1,i}(1),p_est_distr{2,i}(2),'o','MarkerSize',5)
-    plot(p_est_distr_MH{1,i}(1),p_est_distr_MH{2,i}(2),'d','MarkerSize',5)
-end
+plot(p_hat(1,1:end-1),p_hat(2,1:end-1),'.')
+plot(cellfun(@(v)v(1),p_est_distr(1,1:end-1)),cellfun(@(v)v(2),p_est_distr(1,1:end-1)),'o','MarkerSize',5)
+plot(cellfun(@(v)v(1),p_est_distr_MH(1,1:end-1)),cellfun(@(v)v(2),p_est_distr_MH(1,1:end-1)),'d','MarkerSize',5)
 plot(obj_x,obj_y,'.','MarkerSize',40)
+legend('Centralized','WLS','MH', 'Real Obj')
+title('Distributed Estimation')
+
 
 

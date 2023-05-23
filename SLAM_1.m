@@ -14,6 +14,7 @@ to_deg = 1/to_rad;
 
 % include distributed_localization folder
 addpath('functions/')
+addpath('plots/')
 
 % import equations to estimate the object position
 obj_sol;
@@ -404,17 +405,4 @@ end
 
 %% PLots
 
-plots;
-
-%% 
-
-figure, hold on;
-plot(p_hat(1,1:end-1),p_hat(2,1:end-1),'.')
-plot(cellfun(@(v)v(1),p_est_distr(1,1:end-1)),cellfun(@(v)v(2),p_est_distr(1,1:end-1)),'o','MarkerSize',5)
-plot(cellfun(@(v)v(1),p_est_distr_MH(1,1:end-1)),cellfun(@(v)v(2),p_est_distr_MH(1,1:end-1)),'d','MarkerSize',5)
-plot(obj_x,obj_y,'.','MarkerSize',40)
-legend('Centralized','WLS','MH', 'Real Obj')
-title('Distributed Estimation')
-
-
-
+plots_slam1;

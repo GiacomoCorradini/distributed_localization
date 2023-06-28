@@ -37,7 +37,7 @@ s0_2 = [x2; y2; theta2];             % state of robot 2
 n_obj = 5;                          % number of objects
 obj = cell(1,n_obj);
 for i = 1:length(obj)
-    s0_obj = [randi([0 30]); randi([0 30])];  % state of robot 2 [x, y]
+    s0_obj = [randi([0 25]); randi([0 25])];  % state of robot 2 [x, y]
     obj{i} = s0_obj;
 end
 
@@ -103,7 +103,7 @@ for cT=1:length(t)-1
         u_1(3, cT) = -2*u_1(3, cT-1);
         end  
 
-        if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
+        if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(2,cT-1),camera_cell)))
         u_2(3, cT) = -2*u_2(3, cT-1);
         end
     end
@@ -111,7 +111,7 @@ for cT=1:length(t)-1
     % Robot dynamic update
     s_r1(:,cT+1) = RobotDynamic(s_r1(:,cT),u_1(:,cT),Dt);
     s_r2(:,cT+1) = RobotDynamic(s_r2(:,cT),u_2(:,cT),Dt);
-
+    
     % Camera dynamic update
     for i = 1:length(obj)
         tmp1 = cam_data(s_r1(:,cT+1),obj{i});
@@ -137,6 +137,11 @@ for cT=1:length(t)-1
 
 end
 
+s_r2_mob = s_r2;
+s_r2_mob(1,:) = s_r2_mob(1,:) - ones(1, length(s_r2_mob(1,:))).*s_r2_mob(1,1);
+s_r2_mob(2,:) = s_r2_mob(2,:) - ones(1, length(s_r2_mob(2,:))).*s_r2_mob(2,1);
+
+
 %% Calculate exact position of the robot
 
 obj_ground_cell = cell(1,n_obj);
@@ -144,32 +149,40 @@ obj_robot1_cell = cell(1,n_obj);
 obj_robot2_cell = cell(1,n_obj);
 
 for i = 1:length(obj)
-    obj_ground_cell{i} = zeros(length(s0_obj),length(t));
-    obj_robot1_cell{i} = zeros(length(s0_obj),length(t));
-    obj_robot2_cell{i} = zeros(length(s0_obj),length(t));
+    obj_ground_cell{i} = nan(length(s0_obj),length(t));
+    obj_robot1_cell{i} = nan(length(s0_obj),length(t));
+    obj_robot2_cell{i} = nan(length(s0_obj),length(t));
 end
 
 for i = 1:length(obj)
-    for cT=1:length(t)-1
+    for cT=2:length(t)
             
-        if ~isnan(camera_cell{i}(1,cT)) && ~isnan(camera_cell{i}(1,cT+1))
+        if ~isnan(camera_cell{i}(1,cT)) && ~isnan(camera_cell{i}(1,cT-1))
             % calculate the position of the object for each time step
-            phi2 = s_r1(3,cT+1) - s_r1(3,cT);
+            phi2 = - s_r1(3,cT) + s_r1(3,cT-1);
             [obj_robot1_cell{i}(1,cT),obj_robot1_cell{i}(2,cT),~,~] = ...
-             object_detection(s_r1(1,cT),s_r1(2,cT),s_r1(3,cT),s_r1(1,cT+1),s_r1(2,cT+1),...
-             phi2,camera_cell{i}(1,cT),camera_cell{i}(1,cT+1));
+             object_detection(s_r1(1,cT),s_r1(2,cT),s_r1(3,cT),s_r1(1,cT-1),s_r1(2,cT-1),...
+             phi2,camera_cell{i}(1,cT),camera_cell{i}(1,cT-1));
+
+        elseif isnan(camera_cell{i}(1,cT)) && ~isnan(obj_robot1_cell{i}(1,cT-1))
+            obj_robot1_cell{i}(1,cT) = obj_robot1_cell{i}(1,cT-1);
+            obj_robot1_cell{i}(2,cT) = obj_robot1_cell{i}(2,cT-1);
         end
 
-        if ~isnan(camera_cell{i}(2,cT)) && ~isnan(camera_cell{i}(2,cT+1))
-            phi2 = s_r2(3,cT+1) - s_r2(3,cT);
-            [~,~,obj_robot2_cell{i}(1,cT),obj_robot2_cell{i}(2,cT)] = ...
-             object_detection(s_r2(1,cT),s_r2(2,cT),s_r2(3,cT),s_r2(1,cT+1),s_r2(2,cT+1),...
-             phi2,camera_cell{i}(2,cT),camera_cell{i}(2,cT+1));
+        if ~isnan(camera_cell{i}(2,cT)) && ~isnan(camera_cell{i}(2,cT-1))
+            phi2 = - s_r2_mob(3,cT) + s_r2_mob(3,cT-1);
+            [obj_robot2_cell{i}(1,cT),obj_robot2_cell{i}(2,cT), ~, ~] = ...
+             object_detection(s_r2_mob(1,cT),s_r2_mob(2,cT),s_r2_mob(3,cT),s_r2_mob(1,cT-1),s_r2_mob(2,cT-1),...
+             phi2,camera_cell{i}(2,cT),camera_cell{i}(2,cT-1));
+
+        elseif isnan(camera_cell{i}(2,cT)) && ~isnan(obj_robot2_cell{i}(1,cT-1))
+            obj_robot2_cell{i}(1,cT) = obj_robot2_cell{i}(1,cT-1);
+            obj_robot2_cell{i}(2,cT) = obj_robot2_cell{i}(2,cT-1);
         end
     end
 end
 
-% PLots real dynamics without uncertainty
+% Plots real dynamics without uncertainty
 
 figure('Name','Robots positions'), clf, hold on, axis equal;
 xlabel( 'x [m]' );
@@ -195,10 +208,10 @@ end
 
 %% Matrix rotation optimum
 
-syms gamma x_RF y_RF;
+x = sym('x', [1,3]);
 
-RF = [cos(gamma) -sin(gamma) x_RF ;
-      sin(gamma)  cos(gamma) y_RF ;
+RF = [cos(x(3)) -sin(x(3)) x(1) ;
+      sin(x(3))  cos(x(3)) x(2) ;
           0            0      1  ];
 
 obj_to_min = cell(1,n_obj);
@@ -208,20 +221,24 @@ for i = 1:n_obj
 end
 
 %%
-    
 
 
-for cT = 1:length(t)
+for cT = 1:length(t)-1
     dist = 0;
-    j = 0
     if ~isnan(camera_cell{6}(1,cT))
         for i = 1:n_obj
             obj_to_min{i}(:,cT) = RF*[obj_robot2_cell{i}(:,cT); 1];
-    %         dist = sqrt((obj_robot1_cell{i}(1,cT) - )^2 + (obj_robot2_cell{i}(2,cT) - obj_robot1_cell{i}(2,cT))^2)
-        end  
-        j = j+1
+            if ~isnan(obj_robot2_cell{i}(1,cT)) &&  ~isnan(obj_robot1_cell{i}(1,cT)) 
+            dist = dist + (obj_robot1_cell{i}(1,cT) - obj_to_min{i}(1,cT))^2 + (obj_robot1_cell{i}(2,cT) - obj_to_min{i}(2,cT))^2 ;
+            end
+        end 
+        if ~isnan(obj_robot2_cell{i}(1,cT)) &&  ~isnan(obj_robot1_cell{i}(1,cT)) 
+        fmincon(matlabFunction(dist, 'Vars', {x}), [0,0,0], [0,0,1; 0,0,-1],[pi;pi])
+        end
     end
 end
+    
+
 
 
 

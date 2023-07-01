@@ -24,14 +24,14 @@ FoV = 60*to_rad;
 % robot 1 initial position
 x1 = 0;%randi([-20 20]);                % x coordinate
 y1 = 0;%randi([-20 20]);                % y coordinate
-theta1 = 0; %randi([-180 180])*to_rad;   % theta coordinate
-s0_1 = [x1; y1; theta1];             % state of robot 1
+theta1 = 0; %randi([-180 180])*to_rad;  % theta coordinate
+s0_1 = [x1; y1; theta1];                % state of robot 1
 
 % robot 2 initial position
 x2 = 30;%randi([-20 20]);                % x coordinate
 y2 = 30;%randi([-20 20]);                % y coordinate
 theta2 = -135*to_rad;%randi([-180 180])*to_rad;   % theta coordinate1
-s0_2 = [x2; y2; theta2];             % state of robot 2
+s0_2 = [x2; y2; theta2];                 % state of robot 2
 
 %% Objects position
 n_obj = 5;                          % number of objects
@@ -104,7 +104,8 @@ for cT=1:length(t)-1
         end  
 
         if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(2,cT-1),camera_cell)))
-        u_2(3, cT) = -2*u_2(3, cT-1);
+        tmp =  u_2(3, :) - u_2(3, 1).*ones(1, length(u_2(3,:)));
+        u_2(3, cT) = -2*tmp(cT-1);
         end
     end
 
@@ -137,10 +138,15 @@ for cT=1:length(t)-1
 
 end
 
-s_r2_mob = s_r2;
-s_r2_mob(1,:) = s_r2_mob(1,:) - ones(1, length(s_r2_mob(1,:))).*s_r2_mob(1,1);
-s_r2_mob(2,:) = s_r2_mob(2,:) - ones(1, length(s_r2_mob(2,:))).*s_r2_mob(2,1);
+% 
+for i=1:3
+    s_r2_mob(i,:) = s_r2(i,:) - ones(1, length(s_r2(i,:))).*s_r2(i,1);
+end
 
+R2 = [cos(-s_r2(3,1)) -sin(-s_r2(3,1));
+      sin(-s_r2(3,1))  cos(-s_r2(3,1))];
+  
+s_r2_mob(1:2,:) = R2*s_r2_mob(1:2,:);
 
 %% Calculate exact position of the robot
 
@@ -220,8 +226,7 @@ for i = 1:n_obj
 %     obj_to_min{i} = NaN(3,length(t));
 end
 
-%%
-
+%% Compute initial position of robot 2 in robot 1 ref frame
 
 for cT = 1:length(t)-1
     dist = 0;
@@ -232,17 +237,14 @@ for cT = 1:length(t)-1
             dist = dist + (obj_robot1_cell{i}(1,cT) - obj_to_min{i}(1,cT))^2 + (obj_robot1_cell{i}(2,cT) - obj_to_min{i}(2,cT))^2 ;
             end
         end 
-        if ~isnan(obj_robot2_cell{i}(1,cT)) &&  ~isnan(obj_robot1_cell{i}(1,cT)) 
+        if ~isnan(obj_robot2_cell{i}(1,cT)) &&  ~isnan(obj_robot1_cell{i}(1,cT))  %sto if è da fixare
         fmincon(matlabFunction(dist, 'Vars', {x}), [0,0,0], [0,0,1; 0,0,-1],[pi;pi])
         end
     end
 end
-    
+   
 
-
-
-
-% optimize
+% optimize due strade:
 % 1) calcolare le distanze degli oggetti con lo stesso ID e minizzare amma x_RF y_RF;
 % 2) calcolare le differenza delle coordinate x,y di ogni oggetto
 

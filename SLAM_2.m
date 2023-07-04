@@ -37,7 +37,7 @@ s0_2 = [x2; y2; theta2];                 % state of robot 2
 n_obj = 5;                          % number of objects
 obj = cell(1,n_obj);
 for i = 1:length(obj)
-    s0_obj = [randi([0 25]); randi([0 25])];  % state of robot 2 [x, y]
+    s0_obj = [randi([3 25]); randi([3 25])];  % state of robot 2 [x, y]
     obj{i} = s0_obj;
 end
 
@@ -100,12 +100,12 @@ for cT=1:length(t)-1
     
     if cT > 2
         if sum(~isnan(cellfun(@(v)v(1,cT),camera_cell))) <  sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
-        u_1(3, cT) = -2*u_1(3, cT-1);
+        u_1(3, cT:end) = -u_1(3, cT:end);
         end  
 
         if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(2,cT-1),camera_cell)))
-        tmp =  u_2(3, :) - u_2(3, 1).*ones(1, length(u_2(3,:)));
-        u_2(3, cT) = -2*tmp(cT-1);
+%         tmp =  u_2(3, :) - u_2(3, 1).*ones(1, length(u_2(3,:)));  u_2(3, cT) = -2*tmp(cT-1);
+        u_2(3, cT:end) = -u_2(3, cT:end);  
         end
     end
 
@@ -238,7 +238,7 @@ for cT = 1:length(t)-1
             end
         end 
         if ~isnan(obj_robot2_cell{i}(1,cT)) &&  ~isnan(obj_robot1_cell{i}(1,cT))  %sto if è da fixare
-        fmincon(matlabFunction(dist, 'Vars', {x}), [0,0,0], [0,0,1; 0,0,-1],[pi;pi])
+        fmincon(matlabFunction(dist, 'Vars', {x}), [0,0,0], [0,0,1; 0,0,-1],[2*pi;0])
         end
     end
 end

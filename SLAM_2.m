@@ -6,7 +6,12 @@ close all
 
 % simulation time definition
 Dt = 0.1;
-t = 0:Dt:20;
+Tf = 20;
+t = 0:Dt:Tf;
+
+% limits definitions
+obj_lim_x = 3;
+obj_lim_y = 30;
 
 % convert degree to radiant
 to_rad = pi/180;
@@ -37,7 +42,7 @@ s0_2 = [x2; y2; theta2];                 % state of robot 2
 n_obj = 5;                          % number of objects
 obj = cell(1,n_obj);
 for i = 1:length(obj)
-    s0_obj = [randi([3 25]); randi([3 25])];  % state of robot 2 [x, y]
+    s0_obj = [randi([obj_lim_x obj_lim_y]); randi([obj_lim_x obj_lim_y])];  % state of robot 2 [x, y]
     obj{i} = s0_obj;
 end
 
@@ -45,17 +50,21 @@ figure('Name','Object position'), clf, hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
 title('Object position');
-xlim([-50 50])
-ylim([-50 50])
+xlim([-obj_lim_x*2 obj_lim_y*2])
+ylim([-obj_lim_x*2 obj_lim_y*2])
 for i = 1:length(obj)
     plot(obj{i}(1),obj{i}(2),'.','MarkerSize',30,'Color',color(i));
 end
 
 %% Create dataset of robot position + camera measurement
 
-u_1 = [0*sin(t/10);
-       3*cos(t/20);
-       sin(t/5).*cos(t/4)*0.5];             % velocity of robot 1
+time_to_switch = ceil(length(t)/2);
+
+u_1 = [1.*ones(1,time_to_switch);
+       -10*cos(t(1:time_to_switch)/Tf/2*pi)*(pi/Tf/2);
+       0.*ones(1,time_to_switch)];% sin(t/5).*cos(t/4)*0.5];             % velocity of robot 1
+
+u_1 = [u_1,-flip(u_1(:,1:end-1),2)];
 
 u_2 = [-3*cos(t/20);
        0*sin(t/10);

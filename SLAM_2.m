@@ -11,7 +11,7 @@ t = 0:Dt:Tf;
 
 % limits definitions
 obj_lim_x = 3;
-obj_lim_y = 30;
+obj_lim_y = 25;
 
 % convert degree to radiant
 to_rad = pi/180;
@@ -58,17 +58,20 @@ end
 
 %% Create dataset of robot position + camera measurement
 
-time_to_switch = ceil(length(t)/2);
+time_to_switch = floor(length(t)/2);
 
-u_1 = [1.*ones(1,time_to_switch);
-       -10*cos(t(1:time_to_switch)/Tf/2*pi)*(pi/Tf/2);
-       0.*ones(1,time_to_switch)];% sin(t/5).*cos(t/4)*0.5];             % velocity of robot 1
+u_1 = [2.*ones(1,time_to_switch);
+       -6*cos(t(1:time_to_switch)/(Tf/2-Dt)*pi)*(pi/(Tf/2))];             % velocity of robot 1
 
-u_1 = [u_1,-flip(u_1(:,1:end-1),2)];
+u_1 = [u_1, -flip(u_1(:,1:end),2), [0; pi]];
 
-u_2 = [-3*cos(t/20);
-       0*sin(t/10);
-       sin(t/5).*cos(t/4)*0.5];             % velocity of robot 2
+u_1(3,:) = - [0, diff(atan(u_1(2,1:end-1)./u_1(1,1:end-1))), 0];
+
+u_2 = [+6*cos(t(1:time_to_switch)/(Tf/2-Dt)*pi)*(pi/(Tf/2));
+       -2.*ones(1,time_to_switch);
+       0.*ones(1,time_to_switch)];% sin(t/5).*cos(t/4)*0.5]; 
+
+u_2 = [u_2, -flip(u_2(:,1:end),2), [pi; 0; 0]];
 
 % Cell array of cameras
 camera_cell = cell(1,n_obj);
@@ -118,6 +121,7 @@ for cT=1:length(t)-1
         end
     end
 
+    
     % Robot dynamic update
     s_r1(:,cT+1) = RobotDynamic(s_r1(:,cT),u_1(:,cT),Dt);
     s_r2(:,cT+1) = RobotDynamic(s_r2(:,cT),u_2(:,cT),Dt);
@@ -158,6 +162,8 @@ R2 = [cos(-s_r2(3,1)) -sin(-s_r2(3,1));
 s_r2_mob(1:2,:) = R2*s_r2_mob(1:2,:);
 
 %% Calculate exact position of the robot
+
+s_r1(3,:) = [-atan2(u_1(1,1:time_to_switch),u_1(2,1:time_to_switch))+pi.*ones(1,length(time_to_switch)), -atan2(u_1(1,time_to_switch:end-1),u_1(2,time_to_switch:end-1))];
 
 obj_ground_cell = cell(1,n_obj);
 obj_robot1_cell = cell(1,n_obj);

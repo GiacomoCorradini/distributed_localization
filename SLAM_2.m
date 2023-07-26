@@ -18,7 +18,7 @@ to_rad = pi/180;
 to_deg = 1/to_rad;
 
 % include distributed_localization folder
-addpath('functions/')
+addpath('functions/');
 obj_sol;
 
 % Camera field of view
@@ -242,6 +242,8 @@ end
 
 %% Compute initial position of robot 2 in robot 1 ref frame
 
+matrix_tran = zeros(length(t),3);
+
 for cT = 1:length(t)-1
     dist = 0;
     if ~isnan(camera_cell{6}(1,cT))
@@ -252,7 +254,7 @@ for cT = 1:length(t)-1
             end
         end 
         if ~isnan(obj_robot2_cell{i}(1,cT)) &&  ~isnan(obj_robot1_cell{i}(1,cT))  %sto if è da fixare
-        fmincon(matlabFunction(dist, 'Vars', {x}), [0,0,0], [0,0,1; 0,0,-1],[2*pi;0])
+        matrix_tran(cT,:) = fmincon(matlabFunction(dist, 'Vars', {x}), [0,0,0], [0,0,1; 0,0,-1],[2*pi;0]);
         end
     end
 end
@@ -393,10 +395,10 @@ end
 
 % Plots real dynamics without uncertainty
 
-figure('Name','Robots positions'),  hold on, axis equal;
+figure('Name','Robots positions with uncertainty'),  hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
-title('Robot position in time');
+title('Robot position in time with uncertainty');
 xlim([-40 40])
 ylim([-40 40])
 
@@ -415,6 +417,7 @@ for i = 1:3:length(t)-1
         disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),cameraSensor)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),cameraSensor))))])
 end
 
+%%
 figure('Name','Obj position noise'), clf;
 for i=1:n_obj
     subplot(2,n_obj,i);
@@ -434,4 +437,37 @@ for i=1:n_obj
     legend('noise x_2','noise y_2')
     xlabel('t [s]'); ylabel('noise [m]');
     xlim([0, Tf])
+end
+
+%% Matrix rotation optimum
+
+x_bar = sym('x', [1,3]);
+
+RF_bar = [cos(x_bar(3)) -sin(x_bar(3)) x_bar(1) ;
+      sin(x_bar(3))  cos(x_bar(3)) x_bar(2) ;
+          0            0      1  ];
+
+obj_to_min_bar = cell(1,n_obj);
+
+for i = 1:n_obj
+%     obj_to_min_bar{i} = NaN(3,length(t));
+end
+
+%% Compute initial position of robot 2 in robot 1 ref frame
+
+matrix_tran_bar = zeros(length(t),3);
+
+for cT = 1:length(t)-1
+    dist_bar = 0;
+    if ~isnan(cameraSensor{6}(1,cT))
+        for i = 1:n_obj
+            obj_to_min_bar{i}(:,cT) = RF*[obj_robot2_cell_bar{i}(:,cT); 1];
+            if ~isnan(obj_robot2_cell_bar{i}(1,cT)) &&  ~isnan(obj_robot1_cell_bar{i}(1,cT)) 
+            dist_bar = dist_bar + (obj_robot1_cell_bar{i}(1,cT) - obj_to_min_bar{i}(1,cT))^2 + (obj_robot1_cell_bar{i}(2,cT) - obj_to_min_bar{i}(2,cT))^2 ;
+            end
+        end 
+        if ~isnan(obj_robot2_cell_bar{i}(1,cT)) &&  ~isnan(obj_robot1_cell_bar{i}(1,cT))  %sto if è da fixare
+            matrix_tran_bar(cT,:) = fmincon(matlabFunction(dist_bar, 'Vars', {x}), [0,0,0], [0,0,1; 0,0,-1],[2*pi;0]);
+        end
+    end
 end

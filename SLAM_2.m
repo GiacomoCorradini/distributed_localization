@@ -3,6 +3,7 @@
 clc
 clear
 close all
+set(0,'DefaultFigureWindowStyle','docked');
 
 % simulation time definition
 Dt = 0.1;
@@ -395,11 +396,9 @@ for i = 1:length(obj)
     end
 end
 
-% Plots real dynamics without uncertainty
-
+% Plots dynamics with uncertainty
 an_fig2 = figure('Name','Robots positions with uncertainty');
 hold on, axis equal;
-figure('Name','Robots positions with uncertainty'),  hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
 title('Robot position in time with uncertainty');

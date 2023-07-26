@@ -10,6 +10,6 @@ y_obj = s_obj(2);
 dx = x_obj - x_robot;
 dy = y_obj - y_robot;
 
-cam_value = atan2(dy,dx) - theta_robot;
+cam_value = rem(atan2(dy,dx) - theta_robot, 2*pi);
 
 end

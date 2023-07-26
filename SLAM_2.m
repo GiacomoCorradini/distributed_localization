@@ -6,12 +6,12 @@ close all
 
 % simulation time definition
 Dt = 0.1;
-Tf = 20;
+Tf = 25;
 t = 0:Dt:Tf;
 
 % limits definitions
-obj_lim_x = 3;
-obj_lim_y = 25;
+obj_lim_x = 5;
+obj_lim_y = 20;
 
 % convert degree to radiant
 to_rad = pi/180;
@@ -29,7 +29,7 @@ FoV = 60*to_rad;
 % robot 1 initial position
 x1 = 0;%randi([-20 20]);                % x coordinate
 y1 = 0;%randi([-20 20]);                % y coordinate
-theta1 = 0; %randi([-180 180])*to_rad;  % theta coordinate
+theta1 = 45*to_rad; %randi([-180 180])*to_rad;  % theta coordinate
 s0_1 = [x1; y1; theta1];                % state of robot 1
 
 % robot 2 initial position
@@ -61,15 +61,14 @@ end
 time_to_switch = floor(length(t)/2);
 
 u_1 = [2.*ones(1,time_to_switch);
-       -6*cos(t(1:time_to_switch)/(Tf/2-Dt)*pi)*(pi/(Tf/2))];             % velocity of robot 1
+       -6*cos(t(1:time_to_switch)/(Tf/2-Dt)*pi)*(pi/(Tf/2));
+       cos(t(1:time_to_switch)/(Tf/2-Dt)*pi/2)*pi^2/2/Tf];             % velocity of robot 1
 
-u_1 = [u_1, -flip(u_1(:,1:end),2), [0; pi]];
-
-u_1(3,:) = - [0, diff(atan(u_1(2,1:end-1)./u_1(1,1:end-1))), 0];
+u_1 = [u_1, -flip(u_1(:,1:end),2), [0; pi; 0]];
 
 u_2 = [+6*cos(t(1:time_to_switch)/(Tf/2-Dt)*pi)*(pi/(Tf/2));
        -2.*ones(1,time_to_switch);
-       0.*ones(1,time_to_switch)];% sin(t/5).*cos(t/4)*0.5]; 
+       -cos(t(1:time_to_switch)/(Tf/2-Dt)*pi/2)*pi^2/2/Tf]; 
 
 u_2 = [u_2, -flip(u_2(:,1:end),2), [pi; 0; 0]];
 
@@ -110,17 +109,17 @@ end
 
 for cT=1:length(t)-1
     
-    if cT > 2
-        if sum(~isnan(cellfun(@(v)v(1,cT),camera_cell))) <  sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
-        u_1(3, cT:end) = -u_1(3, cT:end);
-        end  
-
-        if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(2,cT-1),camera_cell)))
-%         tmp =  u_2(3, :) - u_2(3, 1).*ones(1, length(u_2(3,:)));  u_2(3, cT) = -2*tmp(cT-1);
-        u_2(3, cT:end) = -u_2(3, cT:end);  
-        end
-    end
-
+    % if cT > 2 && cT < time_to_switch
+    %     % if sum(~isnan(cellfun(@(v)v(1,cT),camera_cell))) <  sum(~isnan(cellfun(@(v)v(1,cT-1),camera_cell)))
+    %     % u_1(3, cT:time_to_switch) = -u_1(3, cT:time_to_switch);
+    %     % u_1(3, time_to_switch+1:end-1) = -flip(u_1(3,1:time_to_switch),2);
+    %     % end  
+    % 
+    %     if sum(~isnan(cellfun(@(v)v(2,cT),camera_cell))) < sum(~isnan(cellfun(@(v)v(2,cT-1),camera_cell)))
+    %     u_2(3, time_to_switch+1:end-1) = -flip(u_2(3,1:time_to_switch),2);
+    %     end
+    % end
+    
     
     % Robot dynamic update
     s_r1(:,cT+1) = RobotDynamic(s_r1(:,cT),u_1(:,cT),Dt);
@@ -130,6 +129,7 @@ for cT=1:length(t)-1
     for i = 1:length(obj)
         tmp1 = cam_data(s_r1(:,cT+1),obj{i});
         tmp2 = cam_data(s_r2(:,cT+1),obj{i});
+        camera_cell2{i}(2,cT+1) = tmp2;
         if abs(tmp1) < FoV
             camera_cell{i}(1,cT+1) = tmp1;
         end
@@ -163,7 +163,7 @@ s_r2_mob(1:2,:) = R2*s_r2_mob(1:2,:);
 
 %% Calculate exact position of the robot
 
-s_r1(3,:) = [-atan2(u_1(1,1:time_to_switch),u_1(2,1:time_to_switch))+pi.*ones(1,length(time_to_switch)), -atan2(u_1(1,time_to_switch:end-1),u_1(2,time_to_switch:end-1))];
+% s_r1(3,:) = [-atan2(u_1(1,1:time_to_switch),u_1(2,1:time_to_switch))+pi.*ones(1,length(time_to_switch)), -atan2(u_1(1,time_to_switch:end-1),u_1(2,time_to_switch:end-1))];
 
 obj_ground_cell = cell(1,n_obj);
 obj_robot1_cell = cell(1,n_obj);

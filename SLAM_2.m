@@ -46,7 +46,7 @@ for i = 1:length(obj)
     obj{i} = s0_obj;
 end
 
-figure('Name','Object position'), clf, hold on, axis equal;
+figure('Name','Object position'),  hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
 title('Object position');
@@ -129,7 +129,6 @@ for cT=1:length(t)-1
     for i = 1:length(obj)
         tmp1 = cam_data(s_r1(:,cT+1),obj{i});
         tmp2 = cam_data(s_r2(:,cT+1),obj{i});
-        camera_cell2{i}(2,cT+1) = tmp2;
         if abs(tmp1) < FoV
             camera_cell{i}(1,cT+1) = tmp1;
         end
@@ -205,7 +204,7 @@ end
 
 % Plots real dynamics without uncertainty
 
-figure('Name','Robots positions'), clf, hold on, axis equal;
+figure('Name','Robots positions'),  hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
 title('Robot position in time');
@@ -265,14 +264,13 @@ end
 
 
 
-%
 %% Sensors uncertainty
 
 % -------------------------------------------------------------------------
 % CAMERA -> give the angle between the forward axis and the line passing
 % through the center of the robot and the object
 mu_camera = 0;        % mean value -> 0 means calibrated
-sigma_camera = 10e-4;  % variance
+sigma_camera = 1e-3;  % variance
 
 for i = 1:length(camera_cell)
     cameraSensor{i} = camera_cell{i} + randn(2,length(camera_cell{i}))*sigma_camera + mu_camera*ones(2,length(camera_cell{i}));
@@ -280,17 +278,33 @@ end
 
 % -------------------------------------------------------------------------
 % INPUT -> input velocity of the robot
-mu_u = zeros(3,1);        % mean value -> 0 means calibrated
+mu_u = ones(3,1).*0.001; %zeros(3,1);        % mean value -> 0 means calibrated
 sigma_u = 1e-2;  % covariance
 
 u_1bar = u_1 + randn(3,length(u_1)).*sigma_u + mu_u.*ones(3,length(s_r1));
 u_2bar = u_2 + randn(3,length(u_2)).*sigma_u + mu_u.*ones(3,length(s_r1));
 
-figure('Name','Camera noise'), clf, hold on;
+figure('Name','Camera noise'),  hold on;
 plot(t, cameraSensor{1}(1,:) - camera_cell{1}(1,:));
 plot(t, cameraSensor{1}(2,:) - camera_cell{1}(2,:));
 title('Camera noise');
 legend('noise camera 1','noise camera 2')
+xlabel('t [s]'); ylabel('noise [m]');
+
+figure('Name','Velocity noise robot 1'),  hold on;
+plot(t, u_1bar(1,:) - u_1(1,:));
+plot(t, u_1bar(2,:) - u_1(2,:));
+plot(t, u_1bar(3,:) - u_1(3,:));
+title('Velocity noise robot 1');
+legend('velocity noise x_1','velocity noise y_1','velocity noise theta_1')
+xlabel('t [s]'); ylabel('noise [m]');
+
+figure('Name','Velocity noise robot 2'),  hold on;
+plot(t, u_2bar(1,:) - u_2(1,:));
+plot(t, u_2bar(2,:) - u_2(2,:));
+plot(t, u_2bar(3,:) - u_2(3,:));
+title('Velocity noise robot 2');
+legend('velocity noise x_2','velocity noise y_2','velocity noise theta_2')
 xlabel('t [s]'); ylabel('noise [m]');
 
 %% UNCERTAINTY
@@ -312,26 +326,41 @@ end
 
 s_r2_mob_bar = zeros(length(s0_2),length(t));
 
-% 
 for i=1:3
     s_r2_mob_bar(i,:) = s_r2_bar(i,:) - ones(1, length(s_r2_bar(i,:))).*s_r2_bar(i,1);
 end
 
 R2_bar = [cos(-s_r2_bar(3,1)) -sin(-s_r2_bar(3,1));
-      sin(-s_r2_bar(3,1))  cos(-s_r2_bar(3,1))];
+          sin(-s_r2_bar(3,1))  cos(-s_r2_bar(3,1))];
   
 s_r2_mob_bar(1:2,:) = R2_bar*s_r2_mob_bar(1:2,:);
 
+figure('Name','Position noise robot 1'),  hold on;
+plot(t, s_r1_bar(1,:) - s_r1(1,:));
+plot(t, s_r1_bar(2,:) - s_r1(2,:));
+plot(t, s_r1_bar(3,:) - s_r1(3,:));
+title('Position noise robot 1');
+legend('Position noise x_1','Position noise y_1','Position noise theta_1')
+xlabel('t [s]'); ylabel('noise [m]');
+
+figure('Name','Position noise robot 2'),  hold on;
+plot(t, s_r2_bar(1,:) - s_r2(1,:));
+plot(t, s_r2_bar(2,:) - s_r2(2,:));
+plot(t, s_r2_bar(3,:) - s_r2(3,:));
+title('Position noise robot 2');
+legend('velocity noise x_2','velocity noise y_2','velocity noise theta_2')
+xlabel('t [s]'); ylabel('noise [m]');
+
 %% Calculate exact position of the robot
 
-obj_ground_cell_mob = cell(1,n_obj);
-obj_robot1_cell_mob = cell(1,n_obj);
-obj_robot2_cell_mob = cell(1,n_obj);
+obj_ground_cell_bar = cell(1,n_obj);
+obj_robot1_cell_bar = cell(1,n_obj);
+obj_robot2_cell_bar = cell(1,n_obj);
 
 for i = 1:length(obj)
-    obj_ground_cell_mob{i} = nan(length(s0_obj),length(t));
-    obj_robot1_cell_mob{i} = nan(length(s0_obj),length(t));
-    obj_robot2_cell_mob{i} = nan(length(s0_obj),length(t));
+    obj_ground_cell_bar{i} = nan(length(s0_obj),length(t));
+    obj_robot1_cell_bar{i} = nan(length(s0_obj),length(t));
+    obj_robot2_cell_bar{i} = nan(length(s0_obj),length(t));
 end
 
 for i = 1:length(obj)
@@ -340,37 +369,36 @@ for i = 1:length(obj)
         if ~isnan(cameraSensor{i}(1,cT)) && ~isnan(cameraSensor{i}(1,cT-1))
             % calculate the position of the object for each time step
             phi2 = - s_r1_bar(3,cT) + s_r1_bar(3,cT-1);
-            [obj_robot1_cell_mob{i}(1,cT),obj_robot1_cell_mob{i}(2,cT),~,~] = ...
+            [obj_robot1_cell_bar{i}(1,cT),obj_robot1_cell_bar{i}(2,cT),~,~] = ...
              object_detection(s_r1_bar(1,cT),s_r1_bar(2,cT),s_r1_bar(3,cT),s_r1_bar(1,cT-1),s_r1_bar(2,cT-1),...
              phi2,cameraSensor{i}(1,cT),cameraSensor{i}(1,cT-1));
 
-        elseif isnan(cameraSensor{i}(1,cT)) && ~isnan(obj_robot1_cell_mob{i}(1,cT-1))
-            obj_robot1_cell_mob{i}(1,cT) = obj_robot1_cell_mob{i}(1,cT-1);
-            obj_robot1_cell_mob{i}(2,cT) = obj_robot1_cell_mob{i}(2,cT-1);
+        elseif isnan(cameraSensor{i}(1,cT)) && ~isnan(obj_robot1_cell_bar{i}(1,cT-1))
+            obj_robot1_cell_bar{i}(1,cT) = obj_robot1_cell_bar{i}(1,cT-1);
+            obj_robot1_cell_bar{i}(2,cT) = obj_robot1_cell_bar{i}(2,cT-1);
         end
 
         if ~isnan(cameraSensor{i}(2,cT)) && ~isnan(cameraSensor{i}(2,cT-1))
             phi2 = - s_r2_mob_bar(3,cT) + s_r2_mob_bar(3,cT-1);
-            [obj_robot2_cell_mob{i}(1,cT),obj_robot2_cell_mob{i}(2,cT), ~, ~] = ...
+            [obj_robot2_cell_bar{i}(1,cT),obj_robot2_cell_bar{i}(2,cT), ~, ~] = ...
              object_detection(s_r2_mob_bar(1,cT),s_r2_mob_bar(2,cT),s_r2_mob_bar(3,cT),s_r2_mob_bar(1,cT-1),s_r2_mob_bar(2,cT-1),...
              phi2,cameraSensor{i}(2,cT),cameraSensor{i}(2,cT-1));
 
-        elseif isnan(cameraSensor{i}(2,cT)) && ~isnan(obj_robot2_cell_mob{i}(1,cT-1))
-            obj_robot2_cell_mob{i}(1,cT) = obj_robot2_cell_mob{i}(1,cT-1);
-            obj_robot2_cell_mob{i}(2,cT) = obj_robot2_cell_mob{i}(2,cT-1);
+        elseif isnan(cameraSensor{i}(2,cT)) && ~isnan(obj_robot2_cell_bar{i}(1,cT-1))
+            obj_robot2_cell_bar{i}(1,cT) = obj_robot2_cell_bar{i}(1,cT-1);
+            obj_robot2_cell_bar{i}(2,cT) = obj_robot2_cell_bar{i}(2,cT-1);
         end
     end
 end
 
 % Plots real dynamics without uncertainty
 
-figure('Name','Robots positions'), clf, hold on, axis equal;
+figure('Name','Robots positions'),  hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
 title('Robot position in time');
 xlim([-40 40])
 ylim([-40 40])
-
 
 for i = 1:3:length(t)-1  
         phi2 = s_r2_bar(3,i) - s_r1_bar(3,i);
@@ -385,4 +413,25 @@ for i = 1:3:length(t)-1
         if ~isempty(p1), delete(p1), end
         if ~isempty(p2), delete(p2), end
         disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),cameraSensor)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),cameraSensor))))])
+end
+
+figure('Name','Obj position noise'), clf;
+for i=1:n_obj
+    subplot(2,n_obj,i);
+    hold on;
+    plot(t, obj_robot1_cell_bar{i}(1,:) - obj_robot1_cell{i}(1,:));
+    plot(t, obj_robot1_cell_bar{i}(2,:) - obj_robot1_cell{i}(2,:));
+    title('Obj position noise robot_1');
+    legend('noise x_1','noise y_1')
+    xlabel('t [s]'); ylabel('noise [m]');
+    xlim([0, Tf])
+
+    subplot(2,n_obj,i+n_obj);
+    hold on;
+    plot(t, obj_robot2_cell_bar{i}(1,:) - obj_robot2_cell{i}(1,:));
+    plot(t, obj_robot2_cell_bar{i}(2,:) - obj_robot2_cell{i}(2,:));
+    title('Obj position noise robot_2');
+    legend('noise x_2','noise y_2')
+    xlabel('t [s]'); ylabel('noise [m]');
+    xlim([0, Tf])
 end

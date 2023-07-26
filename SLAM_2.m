@@ -204,7 +204,8 @@ end
 
 % Plots real dynamics without uncertainty
 
-figure('Name','Robots positions'),  hold on, axis equal;
+an_fig1 = figure('Name','Robots positions');
+hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
 title('Robot position in time');
@@ -212,8 +213,9 @@ xlim([-40 40])
 ylim([-40 40])
 
 
-for i = 1:3:length(t)-1  
+for i = 1:4:length(t)-1  
         phi2 = s_r2(3,i) - s_r1(3,i);
+        set(0, 'currentfigure', an_fig1);
         for j = 1:length(obj)
         [p1(j), p2(j), p11, p22] = plot_location2(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
                       obj{j}(1),obj{j}(2),camera_cell{j}(1,i),camera_cell{j}(2,i),color(j),color(j+10), camera_cell{n_obj+1}(:,i));
@@ -395,6 +397,8 @@ end
 
 % Plots real dynamics without uncertainty
 
+an_fig2 = figure('Name','Robots positions with uncertainty');
+hold on, axis equal;
 figure('Name','Robots positions with uncertainty'),  hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
@@ -402,9 +406,12 @@ title('Robot position in time with uncertainty');
 xlim([-40 40])
 ylim([-40 40])
 
-for i = 1:3:length(t)-1  
+
+for i = 1:4:length(t)-1  
         phi2 = s_r2_bar(3,i) - s_r1_bar(3,i);
         for j = 1:length(obj)
+        set(0, 'currentfigure', an_fig2);
+        % shg;
         [p1(j), p2(j), p11, p22] = plot_location2(s_r1_bar(1,i),s_r1_bar(2,i),s_r1_bar(3,i),s_r2_bar(1,i),s_r2_bar(2,i),phi2,...
                       obj{j}(1),obj{j}(2),cameraSensor{j}(1,i),cameraSensor{j}(2,i),color(j),color(j+10), cameraSensor{n_obj+1}(:,i));
         

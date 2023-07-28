@@ -356,6 +356,35 @@ R2_bar = [cos(-s_r2_bar(3,1)) -sin(-s_r2_bar(3,1));
   
 s_r2_mob_bar(1:2,:) = R2_bar*s_r2_mob_bar(1:2,:);
 
+% ------ RAW LOOP CLOSURE WITH INVERSE DYNAMICS -------
+% s_r1_bar_corr = s_r1_bar;
+% s_r2_bar_corr = s_r2_bar;
+% s_r1_bar_corr(:,end) = s_r1_bar_corr(:,1);
+% s_r2_bar_corr(:,end) = s_r2_bar_corr(:,1);
+% step = length(t);
+% 
+% for cT=1:time_to_switch
+% 
+%     % Robot dynamic update
+%     s_r1_bar_corr(:,step - cT) = RobotDynamic(s_r1_bar_corr(:,step-cT+1),-u_1bar(:,step-cT),Dt);
+%     s_r2_bar_corr(:,step - cT) = RobotDynamic(s_r2_bar_corr(:,step-cT+1),-u_2bar(:,step-cT),Dt);
+% 
+%     Pstore{1,cT+1} = Pstore{1,cT} + R_INPUT^2.*Dt^2;
+%     Pstore{2,cT+1} = Pstore{2,cT} + R_INPUT^2.*Dt^2;
+% 
+% end
+% 
+% s_r2_mob_bar_corr = s_r2_mob_bar;
+% 
+% for i=1:3
+%     s_r2_mob_bar_corr(i,:) = s_r2_bar(i,:) - ones(1, length(s_r2_bar_corr(i,:))).*s_r2_bar_corr(i,1);
+% end
+% 
+% R2_bar_corr = [cos(-s_r2_bar_corr(3,1)) -sin(-s_r2_bar_corr(3,1));
+%                sin(-s_r2_bar_corr(3,1))  cos(-s_r2_bar_corr(3,1))];
+% 
+% s_r2_mob_bar_corr(1:2,:) = R2_bar_corr*s_r2_mob_bar_corr(1:2,:);
+
 figure('Name','Position noise robot 1'),  hold on;
 plot(t, s_r1_bar(1,:) - s_r1(1,:));
 plot(t, s_r1_bar(2,:) - s_r1(2,:));

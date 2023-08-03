@@ -4,6 +4,8 @@ clc
 clear
 close all
 
+set(0,'DefaultFigureWindowStyle','docked');
+
 % simulation time definition
 Dt = 0.1;
 t = 0:Dt:20;
@@ -11,8 +13,8 @@ t = 0:Dt:20;
 % convert degree to radiant
 to_rad = pi/180;
 to_deg = 1/to_rad;
-% 
-% include distributed_localization folder
+
+% include functions & plots folder
 addpath('functions/')
 addpath('plots/')
 

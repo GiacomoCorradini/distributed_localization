@@ -78,6 +78,14 @@ plot(obj_x,obj_y,'.','MarkerSize',40)
 legend('Centralized','WLS','MH', 'Real Obj')
 title('Distributed Estimation')
 
+figure, hold on;
+plot(p_hat(1,1:end-1),p_hat(2,1:end-1),'.')
+plot(cellfun(@(v)v(1),p_est_distr(2,1:end-1)),cellfun(@(v)v(2),p_est_distr(2,1:end-1)),'o','MarkerSize',5)
+plot(cellfun(@(v)v(1),p_est_distr_MH(2,1:end-1)),cellfun(@(v)v(2),p_est_distr_MH(2,1:end-1)),'d','MarkerSize',5)
+plot(obj_x,obj_y,'.','MarkerSize',40)
+legend('Centralized','WLS','MH', 'Real Obj')
+title('Distributed Estimation')
+
 % figure('Name','Error(t)'), clf, hold on;
 % plot(t,cellfun(@(v)v(1),obj_est(1,:)));
 % plot(t,s0_obj(1).*ones(length(t)));

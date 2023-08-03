@@ -162,7 +162,7 @@ obj_robot_cell = cell(2,n_obj);
 
 for i = 1:n_obj
     for j = 1:2
-        obj_robot_cell{j} = nan(length(s0_obj),length(t));
+        obj_robot_cell{j,i} = nan(length(s0_obj),length(t));
     end
 end
 
@@ -254,7 +254,7 @@ end
 % CAMERA -> give the angle between the forward axis and the line passing
 % through the center of the robot and the object
 mu_camera = 0;           % mean value -> 0 means calibrated
-sigma_camera = 1e-3;     % variance
+sigma_camera = 1e-4;     % variance
 
 % store cameras dataset
 camera_sensor_bar = cell(1,n_obj);
@@ -266,7 +266,7 @@ end
 % -------------------------------------------------------------------------
 % INPUT -> input velocity of the robot
 mu_u = ones(3,1).*0.001; % mean value -> 0 means calibrated
-sigma_u_t = 1e-2;          % variance of [x,y]
+sigma_u_t = 0.3e-0;          % variance of [x,y]
 sigma_u_r = 1e-4;          % variance of [theta]
 R_INPUT = [sigma_u_t,     0 ,         0;
               0,      sigma_u_t,      0;
@@ -576,8 +576,8 @@ end
 x_bar = sym('x', [1,3]);
 
 RF_bar = [cos(x_bar(3)) -sin(x_bar(3)) x_bar(1) ;
-      sin(x_bar(3))  cos(x_bar(3)) x_bar(2) ;
-          0            0      1  ];
+          sin(x_bar(3))  cos(x_bar(3)) x_bar(2) ;
+                0            0      1  ];
 
 obj_to_min_bar = cell(1,n_obj);
 
@@ -603,3 +603,126 @@ for cT = 1:length(t)-1
         end
     end
 end
+
+R2_opt_bar = cell(1,length(t));
+
+for i=2:length(t)
+    R2_opt_bar{1,i} = [cos(matrix_tran_bar(i,3)) -sin(matrix_tran_bar(i,3)) matrix_tran_bar(i,1) ;
+                       sin(matrix_tran_bar(i,3))  cos(matrix_tran_bar(i,3)) matrix_tran_bar(i,2) ;
+                             0                           0                     1  ];
+end
+
+for i = 2:length(t)-1
+    for j = 1:n_obj
+        obj_robot_cell_bar{3,j}(:,i) = R2_opt_bar{1,i}*[obj_robot_cell{2,j}(:,i); 1];
+    end
+end
+
+
+%% Plot ideal map vs real map
+
+figure('Name','Maps'), hold on;
+xlabel( 'x [m]' );
+ylabel( 'y [m]' );
+for i = 1:n_obj
+    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',30,'Color',color(i));
+end
+plot(s_r1(1,:),s_r1(2,:),'-');
+plot(s_r2(1,:),s_r2(2,:),'-');
+plot(s_r1_bar(1,:),s_r1_bar(2,:),'--');
+plot(s_r2_bar(1,:),s_r2_bar(2,:),'--');
+for j = 3
+    for i = 1:n_obj
+        plot(obj_robot_cell{j,i}(1,:),obj_robot_cell{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+        plot(obj_robot_cell_bar{j,i}(1,:),obj_robot_cell_bar{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+        plot(nanmean(obj_robot_cell_bar{j,i}(1,:)),nanmean(obj_robot_cell_bar{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
+    end
+end
+
+
+
+%% Distributed WLS
+
+% Storing the estimates
+n_sens = 2;
+p_est_distr = cell(2,n_obj);
+p_est_distr_MH = cell(2,n_obj);
+
+for i = 1:n_obj
+    p_est_distr{1,i} = zeros(2,length(t));
+    p_est_distr_MH{1,i} = zeros(2,length(t));
+end
+
+for cT = 1:length(t)-1
+    % initialize each sensor
+    F = cell(n_sens,1);
+    a = cell(n_sens,1);
+    F_MH = cell(n_sens,1);
+    a_MH = cell(n_sens,1);
+    for i=1:n_sens
+        Hi = eye(2);
+        Ri = [Pstore_obj_2{i,1}(1,cT).^2,          0;
+                    0,              Pstore_obj_2{i,1}(2,cT).^2];
+        zi = obj_robot_cell_bar_2{i,1}(:,cT);
+        F{i} = Hi'*inv(Ri)*Hi;
+        a{i} = Hi'*inv(Ri)*zi;
+        F_MH{i} = Hi'*inv(Ri)*Hi;
+        a_MH{i} = Hi'*inv(Ri)*zi;
+    end
+
+    % Number of consensus protocol msg exchanges
+    m = 10;
+    
+    for k=1:m
+        % Topology matrix
+        A = zeros(n_sens,n_sens);
+        ProbOfConnection = 0.5;
+        for i=1:n_sens
+            for j=i+1:n_sens
+                A(i,j) = round(rand(1)-(0.5-ProbOfConnection));
+            end
+        end
+        A = A + A';
+        
+        % Degree vector
+        D = A*ones(n_sens,1);
+    
+        % Maximum Degree Waighting
+        FStore = F;
+        aStore = a;
+        for i=1:n_sens
+            for j=1:n_sens
+                if A(i,j) == 1
+                    F{i} = F{i} + 1/(1+max(D))*(FStore{j} - FStore{i});
+                    a{i} = a{i} + 1/(1+max(D))*(aStore{j} - aStore{i});
+                end
+            end
+        end
+        
+        % Metropolis-Hastings
+        FStore = F_MH;
+        aStore = a_MH;
+        for i=1:n_sens
+            for j=1:n_sens
+                if A(i,j) == 1
+                    F_MH{i} = F_MH{i} + 1/(1+max(D(i), D(j)))*(FStore{j} - FStore{i});
+                    a_MH{i} = a_MH{i} + 1/(1+max(D(i), D(j)))*(aStore{j} - aStore{i});
+                end
+            end
+        end
+    
+    end
+    
+    % Estimates
+    for i=1:n_sens
+        p_est_distr{i,1}(:,cT) = inv(F{i})*a{i};
+    end
+    
+    % Estimates
+    for i=1:n_sens
+        p_est_distr_MH{i,1}(:,cT) = inv(F_MH{i})*a_MH{i};
+    end
+end
+
+figure
+plot(p_est_distr_MH{1,1}(1,:),p_est_distr_MH{1,1}(2,:),'.')

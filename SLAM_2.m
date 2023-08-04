@@ -490,101 +490,101 @@ for i=1:n_obj
     xlim([0, Tf])
 end
 
-%% Calculate position of the object with uncertainty (distributed)
-% 
-% obj_robot_cell_bar_2 = cell(2,n_obj);
-% Pstore_obj_2 = cell(2,n_obj);
-% 
-% for i = 1:n_obj
-%     for j = 1:2
-%         obj_robot_cell_bar_2{j,i} = nan(length(s0_obj),length(t));
-%         Pstore_obj_2{j,i} = zeros(2,length(t));
-%     end
-% end
-% 
-% for i = 1:n_obj
-%     for cT=2:length(t)
-%         fprintf('Iter (%d,%d)\n',i,cT)
-% 
-%         if ~isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(camera_sensor_bar{i}(1,cT-1))
-%             valuelist = [s_r1_bar(1,cT),s_r1_bar(2,cT),s_r1_bar(3,cT),...
-%                          camera_sensor_bar{i}(1,cT),s_r1_bar(1,cT-1),s_r1_bar(2,cT-1),s_r1_bar(3,cT-1),camera_sensor_bar{i}(1,cT-1)];
-%             errlist = [sqrt(Pstore{1,cT}(1,1)),sqrt(Pstore{1,cT}(2,2)),sqrt(Pstore{1,cT}(3,3)),sigma_camera,...
-%                        sqrt(Pstore{1,cT-1}(1,1)),sqrt(Pstore{1,cT-1}(2,2)),sqrt(Pstore{1,cT-1}(3,3)),sigma_camera];
-%             [obj_robot_cell_bar_2{1,i}(1,cT),Pstore_obj_2{1,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errlist);
-%             [obj_robot_cell_bar_2{1,i}(2,cT),Pstore_obj_2{1,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errlist);  
-%         elseif isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(obj_robot_cell_bar_2{1,i}(1,cT-1))
-%             obj_robot_cell_bar_2{1,i}(1,cT) = obj_robot_cell_bar_2{1,i}(1,cT-1);
-%             Pstore_obj_2{1,i}(1,cT) = Pstore_obj_2{1,i}(1,cT-1);
-%             obj_robot_cell_bar_2{1,i}(2,cT) = obj_robot_cell_bar_2{1,i}(2,cT-1);
-%             Pstore_obj_2{1,i}(2,cT) = Pstore_obj_2{1,i}(2,cT-1);
-%         end
-% 
-% 
-%         if ~isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(camera_sensor_bar{i}(2,cT-1))
-%             valuelist = [s_r2_mob_bar(1,cT),s_r2_mob_bar(2,cT),s_r2_mob_bar(3,cT),...
-%                          camera_sensor_bar{i}(2,cT),s_r2_mob_bar(1,cT-1),s_r2_mob_bar(2,cT-1),s_r2_mob_bar(3,cT-1),camera_sensor_bar{i}(2,cT-1)];
-%             errlist = [sqrt(Pstore{2,cT}(1,1)),sqrt(Pstore{2,cT}(2,2)),sqrt(Pstore{2,cT}(3,3)),sigma_camera,...
-%                        sqrt(Pstore{2,cT-1}(1,1)),sqrt(Pstore{2,cT-1}(2,2)),sqrt(Pstore{2,cT-1}(3,3)),sigma_camera];
-%             [obj_robot_cell_bar_2{2,i}(1,cT),Pstore_obj_2{2,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errlist);
-%             [obj_robot_cell_bar_2{2,i}(2,cT),Pstore_obj_2{2,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errlist); 
-%         elseif isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(obj_robot_cell_bar_2{2,i}(1,cT-1))
-%             obj_robot_cell_bar_2{2,i}(1,cT) = obj_robot_cell_bar_2{2,i}(1,cT-1);
-%             Pstore_obj_2{2,i}(1,cT) = Pstore_obj_2{2,i}(1,cT-1);
-%             obj_robot_cell_bar_2{2,i}(2,cT) = obj_robot_cell_bar_2{2,i}(2,cT-1);
-%             Pstore_obj_2{2,i}(2,cT) = Pstore_obj_2{2,i}(2,cT-1);
-%         end
-%     end
-% end
-% 
-% % Plots dynamics with uncertainty
-% an_fig2 = figure('Name','Robots positions with uncertainty 2');
-% hold on, axis equal;
-% xlabel( 'x [m]' );
-% ylabel( 'y [m]' );
-% title('Robot position in time with uncertainty 2');
-% xlim([-40 40])
-% ylim([-40 40])
-% 
-% 
-% for i = 1:4:length(t)-1  
-%         phi2 = s_r2_bar(3,i) - s_r1_bar(3,i);
-%         for j = 1:n_obj
-%         set(0, 'currentfigure', an_fig2);
-%         % shg;
-%         [p1(j), p2(j), p11, p22] = plot_location2(s_r1_bar(1,i),s_r1_bar(2,i),s_r1_bar(3,i),s_r2_bar(1,i),s_r2_bar(2,i),phi2,...
-%                       obj{j}(1),obj{j}(2),camera_sensor_bar{j}(1,i),camera_sensor_bar{j}(2,i),color(j),color(j+10), camera_sensor_bar{n_obj+1}(:,i));
-% 
-%         drawnow
-%         if ~isempty(p11), delete(p11), end
-%         if ~isempty(p22), delete(p22), end
-%         end
-%         if ~isempty(p1), delete(p1), end
-%         if ~isempty(p2), delete(p2), end
-%         disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_sensor_bar)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_sensor_bar))))])
-% end
-% 
-% % Plots objects position with uncertainty
-% figure('Name','Obj position noise 2'), clf;
-% for i=1:n_obj
-%     subplot(2,n_obj,i);
-%     hold on;
-%     plot(t, obj_robot_cell_bar_2{1,i}(1,:) - obj_robot_cell{1,i}(1,:));
-%     plot(t, obj_robot_cell_bar_2{1,i}(2,:) - obj_robot_cell{1,i}(2,:));
-%     title('Obj position noise robot 1');
-%     legend('noise x_1','noise y_1')
-%     xlabel('t [s]'); ylabel('noise [m]');
-%     xlim([0, Tf])
-% 
-%     subplot(2,n_obj,i+n_obj);
-%     hold on;
-%     plot(t, obj_robot_cell_bar_2{2,i}(1,:) - obj_robot_cell{2,i}(1,:));
-%     plot(t, obj_robot_cell_bar_2{2,i}(2,:) - obj_robot_cell{2,i}(2,:));
-%     title('Obj position noise robot 2');
-%     legend('noise x_2','noise y_2')
-%     xlabel('t [s]'); ylabel('noise [m]');
-%     xlim([0, Tf])
-% end
+% Calculate position of the object with uncertainty (distributed)
+
+obj_robot_cell_bar_2 = cell(2,n_obj);
+Pstore_obj_2 = cell(2,n_obj);
+
+for i = 1:n_obj
+    for j = 1:2
+        obj_robot_cell_bar_2{j,i} = nan(length(s0_obj),length(t));
+        Pstore_obj_2{j,i} = zeros(2,length(t));
+    end
+end
+
+for i = 1:n_obj
+    for cT=2:length(t)
+        fprintf('Iter (%d,%d)\n',i,cT)
+
+        if ~isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(camera_sensor_bar{i}(1,cT-1))
+            valuelist = [s_r1_bar(1,cT),s_r1_bar(2,cT),s_r1_bar(3,cT),...
+                         camera_sensor_bar{i}(1,cT),s_r1_bar(1,cT-1),s_r1_bar(2,cT-1),s_r1_bar(3,cT-1),camera_sensor_bar{i}(1,cT-1)];
+            errlist = [sqrt(Pstore{1,cT}(1,1)),sqrt(Pstore{1,cT}(2,2)),sqrt(Pstore{1,cT}(3,3)),sigma_camera,...
+                       sqrt(Pstore{1,cT-1}(1,1)),sqrt(Pstore{1,cT-1}(2,2)),sqrt(Pstore{1,cT-1}(3,3)),sigma_camera];
+            [obj_robot_cell_bar_2{1,i}(1,cT),Pstore_obj_2{1,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errlist);
+            [obj_robot_cell_bar_2{1,i}(2,cT),Pstore_obj_2{1,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errlist);  
+        elseif isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(obj_robot_cell_bar_2{1,i}(1,cT-1))
+            obj_robot_cell_bar_2{1,i}(1,cT) = obj_robot_cell_bar_2{1,i}(1,cT-1);
+            Pstore_obj_2{1,i}(1,cT) = Pstore_obj_2{1,i}(1,cT-1);
+            obj_robot_cell_bar_2{1,i}(2,cT) = obj_robot_cell_bar_2{1,i}(2,cT-1);
+            Pstore_obj_2{1,i}(2,cT) = Pstore_obj_2{1,i}(2,cT-1);
+        end
+
+
+        if ~isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(camera_sensor_bar{i}(2,cT-1))
+            valuelist = [s_r2_mob_bar(1,cT),s_r2_mob_bar(2,cT),s_r2_mob_bar(3,cT),...
+                         camera_sensor_bar{i}(2,cT),s_r2_mob_bar(1,cT-1),s_r2_mob_bar(2,cT-1),s_r2_mob_bar(3,cT-1),camera_sensor_bar{i}(2,cT-1)];
+            errlist = [sqrt(Pstore{2,cT}(1,1)),sqrt(Pstore{2,cT}(2,2)),sqrt(Pstore{2,cT}(3,3)),sigma_camera,...
+                       sqrt(Pstore{2,cT-1}(1,1)),sqrt(Pstore{2,cT-1}(2,2)),sqrt(Pstore{2,cT-1}(3,3)),sigma_camera];
+            [obj_robot_cell_bar_2{2,i}(1,cT),Pstore_obj_2{2,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errlist);
+            [obj_robot_cell_bar_2{2,i}(2,cT),Pstore_obj_2{2,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errlist); 
+        elseif isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(obj_robot_cell_bar_2{2,i}(1,cT-1))
+            obj_robot_cell_bar_2{2,i}(1,cT) = obj_robot_cell_bar_2{2,i}(1,cT-1);
+            Pstore_obj_2{2,i}(1,cT) = Pstore_obj_2{2,i}(1,cT-1);
+            obj_robot_cell_bar_2{2,i}(2,cT) = obj_robot_cell_bar_2{2,i}(2,cT-1);
+            Pstore_obj_2{2,i}(2,cT) = Pstore_obj_2{2,i}(2,cT-1);
+        end
+    end
+end
+
+% Plots dynamics with uncertainty
+an_fig2 = figure('Name','Robots positions with uncertainty 2');
+hold on, axis equal;
+xlabel( 'x [m]' );
+ylabel( 'y [m]' );
+title('Robot position in time with uncertainty 2');
+xlim([-40 40])
+ylim([-40 40])
+
+
+for i = 1:4:length(t)-1  
+        phi2 = s_r2_bar(3,i) - s_r1_bar(3,i);
+        for j = 1:n_obj
+        set(0, 'currentfigure', an_fig2);
+        % shg;
+        [p1(j), p2(j), p11, p22] = plot_location2(s_r1_bar(1,i),s_r1_bar(2,i),s_r1_bar(3,i),s_r2_bar(1,i),s_r2_bar(2,i),phi2,...
+                      obj{j}(1),obj{j}(2),camera_sensor_bar{j}(1,i),camera_sensor_bar{j}(2,i),color(j),color(j+10), camera_sensor_bar{n_obj+1}(:,i));
+
+        drawnow
+        if ~isempty(p11), delete(p11), end
+        if ~isempty(p22), delete(p22), end
+        end
+        if ~isempty(p1), delete(p1), end
+        if ~isempty(p2), delete(p2), end
+        disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_sensor_bar)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_sensor_bar))))])
+end
+
+% Plots objects position with uncertainty
+figure('Name','Obj position noise 2'), clf;
+for i=1:n_obj
+    subplot(2,n_obj,i);
+    hold on;
+    plot(t, obj_robot_cell_bar_2{1,i}(1,:) - obj_robot_cell{1,i}(1,:));
+    plot(t, obj_robot_cell_bar_2{1,i}(2,:) - obj_robot_cell{1,i}(2,:));
+    title('Obj position noise robot 1');
+    legend('noise x_1','noise y_1')
+    xlabel('t [s]'); ylabel('noise [m]');
+    xlim([0, Tf])
+
+    subplot(2,n_obj,i+n_obj);
+    hold on;
+    plot(t, obj_robot_cell_bar_2{2,i}(1,:) - obj_robot_cell{2,i}(1,:));
+    plot(t, obj_robot_cell_bar_2{2,i}(2,:) - obj_robot_cell{2,i}(2,:));
+    title('Obj position noise robot 2');
+    legend('noise x_2','noise y_2')
+    xlabel('t [s]'); ylabel('noise [m]');
+    xlim([0, Tf])
+end
 
 %% Matrix rotation optimum
 
@@ -595,10 +595,6 @@ RF_bar = [cos(x_bar(3)) -sin(x_bar(3)) x_bar(1) ;
                 0            0      1  ];
 
 obj_to_min_bar = cell(1,n_obj);
-
-for i = 1:n_obj
-%     obj_to_min_bar{i} = NaN(3,length(t));
-end
 
 %% Compute initial position of robot 2 in robot 1 ref frame
 
@@ -630,7 +626,7 @@ end
 
 for i = 2:length(t)-1
     for j = 1:n_obj
-        obj_robot_cell_bar{3,j}(:,i) = R2_opt_bar{1,i}*[obj_robot_cell{2,j}(:,i); 1];
+        obj_robot_cell_bar_2{3,j}(:,i) = R2_opt_bar{1,i}*[obj_robot_cell_bar_2{2,j}(:,i); 1];
     end
 end
 
@@ -650,12 +646,50 @@ plot(s_r2_bar(1,:),s_r2_bar(2,:),'--');
 for j = 1:2:3
     for i = 1:n_obj
         plot(obj_robot_cell{j,i}(1,:),obj_robot_cell{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
-        plot(obj_robot_cell_bar{j,i}(1,:),obj_robot_cell_bar{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
-        plot(nanmean(obj_robot_cell_bar{j,i}(1,:)),nanmean(obj_robot_cell_bar{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
+        plot(obj_robot_cell_bar_2{j,i}(1,:),obj_robot_cell_bar_2{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+        plot(nanmean(obj_robot_cell_bar_2{j,i}(1,:)),nanmean(obj_robot_cell_bar_2{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
     end
 end
 
+%% Centralised WLS
 
+p_hat = cell(1,n_obj);
+
+for i = 1:n_obj
+    for j = 1:2
+        p_hat{j,i} = zeros(2,length(t));
+    end
+end
+
+for ob = 1:n_obj
+    for cT = 1:length(t)-1
+        H = [];
+        R = [];
+        Z = [];
+        for i=1:2
+            if i == 2
+                h = 3;
+            else
+                h = i;
+            end
+            R_new = [Pstore_obj_2{i,ob}(1,cT).^2,            0;
+                                 0,              Pstore_obj_2{i,ob}(2,cT).^2];
+            R = blkdiag(R,R_new);
+            H = [H; eye(2)];
+            Z = [Z; obj_robot_cell_bar_2{h,ob}(1:2,cT)];
+        end
+        p_hat{ob}(:,cT) = inv(H'*inv(R)*H)*H'*inv(R)*Z;
+    end
+end
+
+figure('Name','Centralised WLS'), hold on, axis equal;
+title('Centralised WLS')
+xlabel( 'x [m]' ); 
+ylabel( 'y [m]' );
+for i = 1:n_obj
+    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',60,'Color',color(i));
+    plot(p_hat{i}(1,:),p_hat{i}(2,:),'o','MarkerSize',5,'Color',color(i));
+end
 
 %% Distributed WLS
 
@@ -664,81 +698,95 @@ n_sens = 2;
 p_est_distr = cell(2,n_obj);
 p_est_distr_MH = cell(2,n_obj);
 
+% for i = 1:n_obj
+%     p_est_distr{1,i} = zeros(2,length(t));
+%     p_est_distr_MH{1,i} = zeros(2,length(t));
+% end
+
+for ob = 1:n_obj
+    for cT = 1:length(t)-1
+        % initialize each sensor
+        F = cell(n_sens,1);
+        a = cell(n_sens,1);
+        F_MH = cell(n_sens,1);
+        a_MH = cell(n_sens,1);
+        for i=1:n_sens
+            h = i;
+            if i == 2
+                h = 3;
+            end
+            Hi = eye(2);
+            Ri = [Pstore_obj_2{i,ob}(1,cT).^2,          0;
+                        0,              Pstore_obj_2{i,ob}(2,cT).^2];
+            h = 3;
+            zi = obj_robot_cell_bar_2{h,ob}(1:2,cT);
+            F{i} = Hi'*inv(Ri)*Hi;
+            a{i} = Hi'*inv(Ri)*zi;
+            F_MH{i} = Hi'*inv(Ri)*Hi;
+            a_MH{i} = Hi'*inv(Ri)*zi;
+        end
+    
+        % Number of consensus protocol msg exchanges
+        m = 10;
+        
+        for k=1:m
+            % Topology matrix
+            A = zeros(n_sens,n_sens);
+            ProbOfConnection = 0.5;
+            for i=1:n_sens
+                for j=i+1:n_sens
+                    A(i,j) = round(rand(1)-(0.5-ProbOfConnection));
+                end
+            end
+            A = A + A';
+            
+            % Degree vector
+            D = A*ones(n_sens,1);
+        
+            % Maximum Degree Waighting
+            FStore = F;
+            aStore = a;
+            for i=1:n_sens
+                for j=1:n_sens
+                    if A(i,j) == 1
+                        F{i} = F{i} + 1/(1+max(D))*(FStore{j} - FStore{i});
+                        a{i} = a{i} + 1/(1+max(D))*(aStore{j} - aStore{i});
+                    end
+                end
+            end
+            
+            % Metropolis-Hastings
+            FStore = F_MH;
+            aStore = a_MH;
+            for i=1:n_sens
+                for j=1:n_sens
+                    if A(i,j) == 1
+                        F_MH{i} = F_MH{i} + 1/(1+max(D(i), D(j)))*(FStore{j} - FStore{i});
+                        a_MH{i} = a_MH{i} + 1/(1+max(D(i), D(j)))*(aStore{j} - aStore{i});
+                    end
+                end
+            end
+        
+        end
+        
+        % Estimates
+        for i=1:n_sens
+            p_est_distr{i,ob}(:,cT) = inv(F{i})*a{i};
+        end
+        
+        % Estimates
+        for i=1:n_sens
+            p_est_distr_MH{i,ob}(:,cT) = inv(F_MH{i})*a_MH{i};
+        end
+    end
+end
+
+figure('Name','Distributed WLS'), hold on, axis equal;
+title('Distributed WLS')
+xlabel( 'x [m]' ); 
+ylabel( 'y [m]' );
 for i = 1:n_obj
-    p_est_distr{1,i} = zeros(2,length(t));
-    p_est_distr_MH{1,i} = zeros(2,length(t));
+    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',60,'Color',color(i));
+    plot(p_est_distr_MH{1,i}(1,:),p_est_distr_MH{1,i}(2,:),'o','MarkerSize',5,'Color',color(i));
+    plot(p_est_distr_MH{2,i}(1,:),p_est_distr_MH{2,i}(2,:),'*','MarkerSize',5,'Color',color(i));
 end
-
-for cT = 1:length(t)-1
-    % initialize each sensor
-    F = cell(n_sens,1);
-    a = cell(n_sens,1);
-    F_MH = cell(n_sens,1);
-    a_MH = cell(n_sens,1);
-    for i=1:n_sens
-        Hi = eye(2);
-        Ri = [Pstore_obj_2{i,1}(1,cT).^2,          0;
-                    0,              Pstore_obj_2{i,1}(2,cT).^2];
-        zi = obj_robot_cell_bar_2{i,1}(:,cT);
-        F{i} = Hi'*inv(Ri)*Hi;
-        a{i} = Hi'*inv(Ri)*zi;
-        F_MH{i} = Hi'*inv(Ri)*Hi;
-        a_MH{i} = Hi'*inv(Ri)*zi;
-    end
-
-    % Number of consensus protocol msg exchanges
-    m = 10;
-    
-    for k=1:m
-        % Topology matrix
-        A = zeros(n_sens,n_sens);
-        ProbOfConnection = 0.5;
-        for i=1:n_sens
-            for j=i+1:n_sens
-                A(i,j) = round(rand(1)-(0.5-ProbOfConnection));
-            end
-        end
-        A = A + A';
-        
-        % Degree vector
-        D = A*ones(n_sens,1);
-    
-        % Maximum Degree Waighting
-        FStore = F;
-        aStore = a;
-        for i=1:n_sens
-            for j=1:n_sens
-                if A(i,j) == 1
-                    F{i} = F{i} + 1/(1+max(D))*(FStore{j} - FStore{i});
-                    a{i} = a{i} + 1/(1+max(D))*(aStore{j} - aStore{i});
-                end
-            end
-        end
-        
-        % Metropolis-Hastings
-        FStore = F_MH;
-        aStore = a_MH;
-        for i=1:n_sens
-            for j=1:n_sens
-                if A(i,j) == 1
-                    F_MH{i} = F_MH{i} + 1/(1+max(D(i), D(j)))*(FStore{j} - FStore{i});
-                    a_MH{i} = a_MH{i} + 1/(1+max(D(i), D(j)))*(aStore{j} - aStore{i});
-                end
-            end
-        end
-    
-    end
-    
-    % Estimates
-    for i=1:n_sens
-        p_est_distr{i,1}(:,cT) = inv(F{i})*a{i};
-    end
-    
-    % Estimates
-    for i=1:n_sens
-        p_est_distr_MH{i,1}(:,cT) = inv(F_MH{i})*a_MH{i};
-    end
-end
-
-figure
-plot(p_est_distr_MH{1,1}(1,:),p_est_distr_MH{1,1}(2,:),'.')

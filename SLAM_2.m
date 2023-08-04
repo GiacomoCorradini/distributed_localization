@@ -406,89 +406,89 @@ xlabel('t [s]'); ylabel('noise [m]');
 
 %% Calculate position of the object with uncertainty
 
-obj_robot_cell_bar = cell(2,n_obj);
-
-for i = 1:n_obj
-    for j = 1:2
-        obj_robot_cell_bar{j,i} = nan(length(s0_obj),length(t));
-    end
-end
-
-for i = 1:n_obj
-    for cT=2:length(t)
-        fprintf('Iter (%d,%d)\n',i,cT)
-            
-        if ~isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(camera_sensor_bar{i}(1,cT-1))
-            phi2 = - s_r1_bar(3,cT) + s_r1_bar(3,cT-1);
-            [obj_robot_cell_bar{1,i}(1,cT),obj_robot_cell_bar{1,i}(2,cT),~,~] = ...
-             object_detection(s_r1_bar(1,cT),s_r1_bar(2,cT),s_r1_bar(3,cT),s_r1_bar(1,cT-1),s_r1_bar(2,cT-1),...
-             phi2,camera_sensor_bar{i}(1,cT),camera_sensor_bar{i}(1,cT-1));
-        elseif isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(obj_robot_cell_bar{1,i}(1,cT-1))
-            obj_robot_cell_bar{1,i}(1,cT) = obj_robot_cell_bar{1,i}(1,cT-1);
-            obj_robot_cell_bar{1,i}(2,cT) = obj_robot_cell_bar{1,i}(2,cT-1);
-        end
-
-        if ~isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(camera_sensor_bar{i}(2,cT-1))
-            phi2 = - s_r2_mob_bar(3,cT) + s_r2_mob_bar(3,cT-1);
-            [obj_robot_cell_bar{2,i}(1,cT),obj_robot_cell_bar{2,i}(2,cT), ~, ~] = ...
-             object_detection(s_r2_mob_bar(1,cT),s_r2_mob_bar(2,cT),s_r2_mob_bar(3,cT),s_r2_mob_bar(1,cT-1),s_r2_mob_bar(2,cT-1),...
-             phi2,camera_sensor_bar{i}(2,cT),camera_sensor_bar{i}(2,cT-1));
-        elseif isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(obj_robot_cell_bar{2,i}(1,cT-1))
-            obj_robot_cell_bar{2,i}(1,cT) = obj_robot_cell_bar{2,i}(1,cT-1);
-            obj_robot_cell_bar{2,i}(2,cT) = obj_robot_cell_bar{2,i}(2,cT-1);
-        end
-
-    end
-end
-
-% Plots dynamics with uncertainty
-an_fig2 = figure('Name','Robots positions with uncertainty');
-hold on, axis equal;
-xlabel( 'x [m]' );
-ylabel( 'y [m]' );
-title('Robot position in time with uncertainty');
-xlim([-40 40])
-ylim([-40 40])
-
-
-for i = 1:4:length(t)-1  
-        phi2 = s_r2_bar(3,i) - s_r1_bar(3,i);
-        for j = 1:n_obj
-        set(0, 'currentfigure', an_fig2);
-        % shg;
-        [p1(j), p2(j), p11, p22] = plot_location2(s_r1_bar(1,i),s_r1_bar(2,i),s_r1_bar(3,i),s_r2_bar(1,i),s_r2_bar(2,i),phi2,...
-                      obj{j}(1),obj{j}(2),camera_sensor_bar{j}(1,i),camera_sensor_bar{j}(2,i),color(j),color(j+10), camera_sensor_bar{n_obj+1}(:,i));
-        
-        drawnow
-        if ~isempty(p11), delete(p11), end
-        if ~isempty(p22), delete(p22), end
-        end
-        if ~isempty(p1), delete(p1), end
-        if ~isempty(p2), delete(p2), end
-        disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_sensor_bar)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_sensor_bar))))])
-end
-
-% Plots objects position with uncertainty
-figure('Name','Obj position noise'), clf;
-for i=1:n_obj
-    subplot(2,n_obj,i);
-    hold on;
-    plot(t, obj_robot_cell_bar{1,i}(1,:) - obj_robot_cell{1,i}(1,:));
-    plot(t, obj_robot_cell_bar{1,i}(2,:) - obj_robot_cell{1,i}(2,:));
-    title('Obj position noise robot 1');
-    legend('noise x_1','noise y_1')
-    xlabel('t [s]'); ylabel('noise [m]');
-    xlim([0, Tf])
-
-    subplot(2,n_obj,i+n_obj);
-    hold on;
-    plot(t, obj_robot_cell_bar{2,i}(1,:) - obj_robot_cell{2,i}(1,:));
-    plot(t, obj_robot_cell_bar{2,i}(2,:) - obj_robot_cell{2,i}(2,:));
-    title('Obj position noise robot 2');
-    legend('noise x_2','noise y_2')
-    xlabel('t [s]'); ylabel('noise [m]');
-    xlim([0, Tf])
-end
+% obj_robot_cell_bar = cell(2,n_obj);
+% 
+% for i = 1:n_obj
+%     for j = 1:2
+%         obj_robot_cell_bar{j,i} = nan(length(s0_obj),length(t));
+%     end
+% end
+% 
+% for i = 1:n_obj
+%     for cT=2:length(t)
+%         fprintf('Iter (%d,%d)\n',i,cT)
+% 
+%         if ~isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(camera_sensor_bar{i}(1,cT-1))
+%             phi2 = - s_r1_bar(3,cT) + s_r1_bar(3,cT-1);
+%             [obj_robot_cell_bar{1,i}(1,cT),obj_robot_cell_bar{1,i}(2,cT),~,~] = ...
+%              object_detection(s_r1_bar(1,cT),s_r1_bar(2,cT),s_r1_bar(3,cT),s_r1_bar(1,cT-1),s_r1_bar(2,cT-1),...
+%              phi2,camera_sensor_bar{i}(1,cT),camera_sensor_bar{i}(1,cT-1));
+%         elseif isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(obj_robot_cell_bar{1,i}(1,cT-1))
+%             obj_robot_cell_bar{1,i}(1,cT) = obj_robot_cell_bar{1,i}(1,cT-1);
+%             obj_robot_cell_bar{1,i}(2,cT) = obj_robot_cell_bar{1,i}(2,cT-1);
+%         end
+% 
+%         if ~isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(camera_sensor_bar{i}(2,cT-1))
+%             phi2 = - s_r2_mob_bar(3,cT) + s_r2_mob_bar(3,cT-1);
+%             [obj_robot_cell_bar{2,i}(1,cT),obj_robot_cell_bar{2,i}(2,cT), ~, ~] = ...
+%              object_detection(s_r2_mob_bar(1,cT),s_r2_mob_bar(2,cT),s_r2_mob_bar(3,cT),s_r2_mob_bar(1,cT-1),s_r2_mob_bar(2,cT-1),...
+%              phi2,camera_sensor_bar{i}(2,cT),camera_sensor_bar{i}(2,cT-1));
+%         elseif isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(obj_robot_cell_bar{2,i}(1,cT-1))
+%             obj_robot_cell_bar{2,i}(1,cT) = obj_robot_cell_bar{2,i}(1,cT-1);
+%             obj_robot_cell_bar{2,i}(2,cT) = obj_robot_cell_bar{2,i}(2,cT-1);
+%         end
+% 
+%     end
+% end
+% 
+% % Plots dynamics with uncertainty
+% an_fig2 = figure('Name','Robots positions with uncertainty');
+% hold on, axis equal;
+% xlabel( 'x [m]' );
+% ylabel( 'y [m]' );
+% title('Robot position in time with uncertainty');
+% xlim([-40 40])
+% ylim([-40 40])
+% 
+% 
+% for i = 1:4:length(t)-1  
+%         phi2 = s_r2_bar(3,i) - s_r1_bar(3,i);
+%         for j = 1:n_obj
+%         set(0, 'currentfigure', an_fig2);
+%         % shg;
+%         [p1(j), p2(j), p11, p22] = plot_location2(s_r1_bar(1,i),s_r1_bar(2,i),s_r1_bar(3,i),s_r2_bar(1,i),s_r2_bar(2,i),phi2,...
+%                       obj{j}(1),obj{j}(2),camera_sensor_bar{j}(1,i),camera_sensor_bar{j}(2,i),color(j),color(j+10), camera_sensor_bar{n_obj+1}(:,i));
+% 
+%         drawnow
+%         if ~isempty(p11), delete(p11), end
+%         if ~isempty(p22), delete(p22), end
+%         end
+%         if ~isempty(p1), delete(p1), end
+%         if ~isempty(p2), delete(p2), end
+%         disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_sensor_bar)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_sensor_bar))))])
+% end
+% 
+% % Plots objects position with uncertainty
+% figure('Name','Obj position noise'), clf;
+% for i=1:n_obj
+%     subplot(2,n_obj,i);
+%     hold on;
+%     plot(t, obj_robot_cell_bar{1,i}(1,:) - obj_robot_cell{1,i}(1,:));
+%     plot(t, obj_robot_cell_bar{1,i}(2,:) - obj_robot_cell{1,i}(2,:));
+%     title('Obj position noise robot 1');
+%     legend('noise x_1','noise y_1')
+%     xlabel('t [s]'); ylabel('noise [m]');
+%     xlim([0, Tf])
+% 
+%     subplot(2,n_obj,i+n_obj);
+%     hold on;
+%     plot(t, obj_robot_cell_bar{2,i}(1,:) - obj_robot_cell{2,i}(1,:));
+%     plot(t, obj_robot_cell_bar{2,i}(2,:) - obj_robot_cell{2,i}(2,:));
+%     title('Obj position noise robot 2');
+%     legend('noise x_2','noise y_2')
+%     xlabel('t [s]'); ylabel('noise [m]');
+%     xlim([0, Tf])
+% end
 
 %% Calculate position of the object with uncertainty (distributed)
 
@@ -511,16 +511,12 @@ for i = 1:n_obj
                          camera_sensor_bar{i}(1,cT),s_r1_bar(1,cT-1),s_r1_bar(2,cT-1),s_r1_bar(3,cT-1),camera_sensor_bar{i}(1,cT-1)];
             errorlist = [sqrt(Pstore{1,cT}(1,1)),sqrt(Pstore{1,cT}(2,2)),sqrt(Pstore{1,cT}(3,3)),sigma_camera,...
                        sqrt(Pstore{1,cT-1}(1,1)),sqrt(Pstore{1,cT-1}(2,2)),sqrt(Pstore{1,cT-1}(3,3)),sigma_camera];
-            [obj_robot_cell_bar_2{1,i}(1,cT), obj_robot_cell_bar_2{1,i}(2,cT), Pstore_obj_2{1,i}(1,cT),Pstore_obj_2{1,i}(2,cT)] = PropError2(valuelist,errorlist);
-            [~,Pstore_obj{1,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errorlist);
-            [~,Pstore_obj{1,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errorlist); 
+            [obj_robot_cell_bar_2{1,i}(1,cT), obj_robot_cell_bar_2{1,i}(2,cT), Pstore_obj_2{1,i}(1,cT),Pstore_obj_2{1,i}(2,cT)] = PropError2(valuelist,errorlist); 
         elseif isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(obj_robot_cell_bar_2{1,i}(1,cT-1))
             obj_robot_cell_bar_2{1,i}(1,cT) = obj_robot_cell_bar_2{1,i}(1,cT-1);
             Pstore_obj_2{1,i}(1,cT) = Pstore_obj_2{1,i}(1,cT-1);
-            Pstore_obj{1,i}(1,cT) = Pstore_obj{1,i}(1,cT-1);
             obj_robot_cell_bar_2{1,i}(2,cT) = obj_robot_cell_bar_2{1,i}(2,cT-1);
             Pstore_obj_2{1,i}(2,cT) = Pstore_obj_2{1,i}(2,cT-1);
-            Pstore_obj{1,i}(2,cT) = Pstore_obj{1,i}(2,cT-1);
         end
 
 
@@ -530,16 +526,11 @@ for i = 1:n_obj
             errorlist = [sqrt(Pstore{2,cT}(1,1)),sqrt(Pstore{2,cT}(2,2)),sqrt(Pstore{2,cT}(3,3)),sigma_camera,...
                        sqrt(Pstore{2,cT-1}(1,1)),sqrt(Pstore{2,cT-1}(2,2)),sqrt(Pstore{2,cT-1}(3,3)),sigma_camera];
             [obj_robot_cell_bar_2{2,i}(1,cT), obj_robot_cell_bar_2{2,i}(2,cT), Pstore_obj_2{2,i}(1,cT),Pstore_obj_2{2,i}(2,cT)] = PropError2(valuelist,errorlist);
-            [~,Pstore_obj{2,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errorlist);
-            [~,Pstore_obj{2,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errorlist); 
         elseif isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(obj_robot_cell_bar_2{2,i}(1,cT-1))
             obj_robot_cell_bar_2{2,i}(1,cT) = obj_robot_cell_bar_2{2,i}(1,cT-1);
             Pstore_obj_2{2,i}(1,cT) = Pstore_obj_2{2,i}(1,cT-1);
-            Pstore_obj{2,i}(1,cT) = Pstore_obj{2,i}(1,cT-1);
             obj_robot_cell_bar_2{2,i}(2,cT) = obj_robot_cell_bar_2{2,i}(2,cT-1);
             Pstore_obj_2{2,i}(2,cT) = Pstore_obj_2{2,i}(2,cT-1);
-            Pstore_obj{2,i}(2,cT) = Pstore_obj{2,i}(2,cT-1);
-
         end
     end
 end
@@ -611,12 +602,12 @@ for cT = 1:length(t)-1
     dist_bar = 0;
     if ~isnan(camera_sensor_bar{6}(1,cT))
         for i = 1:n_obj
-            obj_to_min_bar{i}(:,cT) = RF*[obj_robot_cell_bar{2,i}(:,cT); 1];
-            if ~isnan(obj_robot_cell_bar{2,i}(1,cT)) &&  ~isnan(obj_robot_cell_bar{1,i}(1,cT)) 
-            dist_bar = dist_bar + (obj_robot_cell_bar{1,i}(1,cT) - obj_to_min_bar{i}(1,cT))^2 + (obj_robot_cell_bar{1,i}(2,cT) - obj_to_min_bar{i}(2,cT))^2 ;
+            obj_to_min_bar{i}(:,cT) = RF*[obj_robot_cell_bar_2{2,i}(:,cT); 1];
+            if ~isnan(obj_robot_cell_bar_2{2,i}(1,cT)) &&  ~isnan(obj_robot_cell_bar_2{1,i}(1,cT)) 
+            dist_bar = dist_bar + (obj_robot_cell_bar_2{1,i}(1,cT) - obj_to_min_bar{i}(1,cT))^2 + (obj_robot_cell_bar_2{1,i}(2,cT) - obj_to_min_bar{i}(2,cT))^2 ;
             end
         end 
-        if ~isnan(obj_robot_cell_bar{2,i}(1,cT)) &&  ~isnan(obj_robot_cell_bar{1,i}(1,cT))  %sto if è da fixare
+        if ~isnan(obj_robot_cell_bar_2{2,i}(1,cT)) &&  ~isnan(obj_robot_cell_bar_2{1,i}(1,cT))  %sto if è da fixare
             matrix_tran_bar(cT,:) = fmincon(matlabFunction(dist_bar, 'Vars', {x}), [0,0,0], [0,0,1; 0,0,-1],[2*pi;0]);
         end
     end
@@ -633,7 +624,6 @@ end
 
 for i = 2:length(t)-1
     for j = 1:n_obj
-        obj_robot_cell_bar{3,j}(:,i) = R2_opt_bar{1,i}*[obj_robot_cell_bar{2,j}(:,i); 1];
         obj_robot_cell_bar_2{3,j}(:,i) = R2_opt_bar{1,i}*[obj_robot_cell_bar_2{2,j}(:,i); 1];
     end
 end
@@ -654,9 +644,7 @@ plot(s_r2_bar(1,:),s_r2_bar(2,:),'--');
 for j = 1:2:3
     for i = 1:n_obj
         plot(obj_robot_cell{j,i}(1,:),obj_robot_cell{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
-        plot(obj_robot_cell_bar{j,i}(1,:),obj_robot_cell_bar{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
         plot(obj_robot_cell_bar_2{j,i}(1,:),obj_robot_cell_bar_2{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
-        plot(nanmean(obj_robot_cell_bar{j,i}(1,:)),nanmean(obj_robot_cell_bar{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
         plot(nanmean(obj_robot_cell_bar_2{j,i}(1,:)),nanmean(obj_robot_cell_bar_2{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
     end
 end

@@ -512,11 +512,15 @@ for i = 1:n_obj
             errorlist = [sqrt(Pstore{1,cT}(1,1)),sqrt(Pstore{1,cT}(2,2)),sqrt(Pstore{1,cT}(3,3)),sigma_camera,...
                        sqrt(Pstore{1,cT-1}(1,1)),sqrt(Pstore{1,cT-1}(2,2)),sqrt(Pstore{1,cT-1}(3,3)),sigma_camera];
             [obj_robot_cell_bar_2{1,i}(1,cT), obj_robot_cell_bar_2{1,i}(2,cT), Pstore_obj_2{1,i}(1,cT),Pstore_obj_2{1,i}(2,cT)] = PropError2(valuelist,errorlist);
+            [~,Pstore_obj{1,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errorlist);
+            [~,Pstore_obj{1,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errorlist); 
         elseif isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(obj_robot_cell_bar_2{1,i}(1,cT-1))
             obj_robot_cell_bar_2{1,i}(1,cT) = obj_robot_cell_bar_2{1,i}(1,cT-1);
             Pstore_obj_2{1,i}(1,cT) = Pstore_obj_2{1,i}(1,cT-1);
+            Pstore_obj{1,i}(1,cT) = Pstore_obj{1,i}(1,cT-1);
             obj_robot_cell_bar_2{1,i}(2,cT) = obj_robot_cell_bar_2{1,i}(2,cT-1);
             Pstore_obj_2{1,i}(2,cT) = Pstore_obj_2{1,i}(2,cT-1);
+            Pstore_obj{1,i}(2,cT) = Pstore_obj{1,i}(2,cT-1);
         end
 
 
@@ -526,11 +530,16 @@ for i = 1:n_obj
             errorlist = [sqrt(Pstore{2,cT}(1,1)),sqrt(Pstore{2,cT}(2,2)),sqrt(Pstore{2,cT}(3,3)),sigma_camera,...
                        sqrt(Pstore{2,cT-1}(1,1)),sqrt(Pstore{2,cT-1}(2,2)),sqrt(Pstore{2,cT-1}(3,3)),sigma_camera];
             [obj_robot_cell_bar_2{2,i}(1,cT), obj_robot_cell_bar_2{2,i}(2,cT), Pstore_obj_2{2,i}(1,cT),Pstore_obj_2{2,i}(2,cT)] = PropError2(valuelist,errorlist);
+            [~,Pstore_obj{2,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errorlist);
+            [~,Pstore_obj{2,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errorlist); 
         elseif isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(obj_robot_cell_bar_2{2,i}(1,cT-1))
             obj_robot_cell_bar_2{2,i}(1,cT) = obj_robot_cell_bar_2{2,i}(1,cT-1);
             Pstore_obj_2{2,i}(1,cT) = Pstore_obj_2{2,i}(1,cT-1);
+            Pstore_obj{2,i}(1,cT) = Pstore_obj{2,i}(1,cT-1);
             obj_robot_cell_bar_2{2,i}(2,cT) = obj_robot_cell_bar_2{2,i}(2,cT-1);
             Pstore_obj_2{2,i}(2,cT) = Pstore_obj_2{2,i}(2,cT-1);
+            Pstore_obj{2,i}(2,cT) = Pstore_obj{2,i}(2,cT-1);
+
         end
     end
 end

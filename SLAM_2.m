@@ -490,7 +490,7 @@ for i=1:n_obj
     xlim([0, Tf])
 end
 
-% Calculate position of the object with uncertainty (distributed)
+%% Calculate position of the object with uncertainty (distributed)
 
 obj_robot_cell_bar_2 = cell(2,n_obj);
 Pstore_obj_2 = cell(2,n_obj);
@@ -509,30 +509,37 @@ for i = 1:n_obj
         if ~isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(camera_sensor_bar{i}(1,cT-1))
             valuelist = [s_r1_bar(1,cT),s_r1_bar(2,cT),s_r1_bar(3,cT),...
                          camera_sensor_bar{i}(1,cT),s_r1_bar(1,cT-1),s_r1_bar(2,cT-1),s_r1_bar(3,cT-1),camera_sensor_bar{i}(1,cT-1)];
-            errlist = [sqrt(Pstore{1,cT}(1,1)),sqrt(Pstore{1,cT}(2,2)),sqrt(Pstore{1,cT}(3,3)),sigma_camera,...
+            errorlist = [sqrt(Pstore{1,cT}(1,1)),sqrt(Pstore{1,cT}(2,2)),sqrt(Pstore{1,cT}(3,3)),sigma_camera,...
                        sqrt(Pstore{1,cT-1}(1,1)),sqrt(Pstore{1,cT-1}(2,2)),sqrt(Pstore{1,cT-1}(3,3)),sigma_camera];
-            [obj_robot_cell_bar_2{1,i}(1,cT),Pstore_obj_2{1,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errlist);
-            [obj_robot_cell_bar_2{1,i}(2,cT),Pstore_obj_2{1,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errlist);  
+            [obj_robot_cell_bar_2{1,i}(1,cT), obj_robot_cell_bar_2{1,i}(2,cT), Pstore_obj_2{1,i}(1,cT),Pstore_obj_2{1,i}(2,cT)] = PropError2(valuelist,errorlist);
+            [~,Pstore_obj{1,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errorlist);
+            [~,Pstore_obj{1,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errorlist); 
         elseif isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(obj_robot_cell_bar_2{1,i}(1,cT-1))
             obj_robot_cell_bar_2{1,i}(1,cT) = obj_robot_cell_bar_2{1,i}(1,cT-1);
             Pstore_obj_2{1,i}(1,cT) = Pstore_obj_2{1,i}(1,cT-1);
+            Pstore_obj{1,i}(1,cT) = Pstore_obj{1,i}(1,cT-1);
             obj_robot_cell_bar_2{1,i}(2,cT) = obj_robot_cell_bar_2{1,i}(2,cT-1);
             Pstore_obj_2{1,i}(2,cT) = Pstore_obj_2{1,i}(2,cT-1);
+            Pstore_obj{1,i}(2,cT) = Pstore_obj{1,i}(2,cT-1);
         end
 
 
         if ~isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(camera_sensor_bar{i}(2,cT-1))
             valuelist = [s_r2_mob_bar(1,cT),s_r2_mob_bar(2,cT),s_r2_mob_bar(3,cT),...
                          camera_sensor_bar{i}(2,cT),s_r2_mob_bar(1,cT-1),s_r2_mob_bar(2,cT-1),s_r2_mob_bar(3,cT-1),camera_sensor_bar{i}(2,cT-1)];
-            errlist = [sqrt(Pstore{2,cT}(1,1)),sqrt(Pstore{2,cT}(2,2)),sqrt(Pstore{2,cT}(3,3)),sigma_camera,...
+            errorlist = [sqrt(Pstore{2,cT}(1,1)),sqrt(Pstore{2,cT}(2,2)),sqrt(Pstore{2,cT}(3,3)),sigma_camera,...
                        sqrt(Pstore{2,cT-1}(1,1)),sqrt(Pstore{2,cT-1}(2,2)),sqrt(Pstore{2,cT-1}(3,3)),sigma_camera];
-            [obj_robot_cell_bar_2{2,i}(1,cT),Pstore_obj_2{2,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errlist);
-            [obj_robot_cell_bar_2{2,i}(2,cT),Pstore_obj_2{2,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errlist); 
+            [obj_robot_cell_bar_2{2,i}(1,cT), obj_robot_cell_bar_2{2,i}(2,cT), Pstore_obj_2{2,i}(1,cT),Pstore_obj_2{2,i}(2,cT)] = PropError2(valuelist,errorlist);
+            [~,Pstore_obj{2,i}(1,cT)] = PropError(obj_x_sol,varlist,valuelist,errorlist);
+            [~,Pstore_obj{2,i}(2,cT)] = PropError(obj_y_sol,varlist,valuelist,errorlist); 
         elseif isnan(camera_sensor_bar{i}(2,cT)) && ~isnan(obj_robot_cell_bar_2{2,i}(1,cT-1))
             obj_robot_cell_bar_2{2,i}(1,cT) = obj_robot_cell_bar_2{2,i}(1,cT-1);
             Pstore_obj_2{2,i}(1,cT) = Pstore_obj_2{2,i}(1,cT-1);
+            Pstore_obj{2,i}(1,cT) = Pstore_obj{2,i}(1,cT-1);
             obj_robot_cell_bar_2{2,i}(2,cT) = obj_robot_cell_bar_2{2,i}(2,cT-1);
             Pstore_obj_2{2,i}(2,cT) = Pstore_obj_2{2,i}(2,cT-1);
+            Pstore_obj{2,i}(2,cT) = Pstore_obj{2,i}(2,cT-1);
+
         end
     end
 end
@@ -626,6 +633,7 @@ end
 
 for i = 2:length(t)-1
     for j = 1:n_obj
+        obj_robot_cell_bar{3,j}(:,i) = R2_opt_bar{1,i}*[obj_robot_cell_bar{2,j}(:,i); 1];
         obj_robot_cell_bar_2{3,j}(:,i) = R2_opt_bar{1,i}*[obj_robot_cell_bar_2{2,j}(:,i); 1];
     end
 end
@@ -646,7 +654,9 @@ plot(s_r2_bar(1,:),s_r2_bar(2,:),'--');
 for j = 1:2:3
     for i = 1:n_obj
         plot(obj_robot_cell{j,i}(1,:),obj_robot_cell{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+        plot(obj_robot_cell_bar{j,i}(1,:),obj_robot_cell_bar{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
         plot(obj_robot_cell_bar_2{j,i}(1,:),obj_robot_cell_bar_2{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+        plot(nanmean(obj_robot_cell_bar{j,i}(1,:)),nanmean(obj_robot_cell_bar{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
         plot(nanmean(obj_robot_cell_bar_2{j,i}(1,:)),nanmean(obj_robot_cell_bar_2{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
     end
 end
@@ -711,9 +721,11 @@ for ob = 1:n_obj
         F_MH = cell(n_sens,1);
         a_MH = cell(n_sens,1);
         for i=1:n_sens
-            h = i;
+            
             if i == 2
                 h = 3;
+            else
+                h = i;
             end
             Hi = eye(2);
             Ri = [Pstore_obj_2{i,ob}(1,cT).^2,          0;
@@ -732,7 +744,7 @@ for ob = 1:n_obj
         for k=1:m
             % Topology matrix
             A = zeros(n_sens,n_sens);
-            ProbOfConnection = 0.5;
+            ProbOfConnection = 0.8;
             for i=1:n_sens
                 for j=i+1:n_sens
                     A(i,j) = round(rand(1)-(0.5-ProbOfConnection));

@@ -155,7 +155,7 @@ R2 = [cos(-s_r2(3,1)) -sin(-s_r2(3,1));
   
 s_r2_mob(1:2,:) = R2*s_r2_mob(1:2,:);
 
-%% Calculate exact position of the object
+%% Calculate exact position of the objects
 
 % store object position w.r.t the robots
 obj_robot_cell = cell(2,n_obj);
@@ -227,7 +227,7 @@ RF = [cos(x(3)) -sin(x(3)) x(1) ;
 
 obj_to_min = cell(1,n_obj);
 
-%% Compute matrix to translate robot 2 in robot 1 RF
+% Compute matrix to translate robot 2 in robot 1 RF
 
 % initialize matrix
 matrix_tran = nan(length(t),3);
@@ -591,6 +591,16 @@ for i=1:n_obj
     legend('noise x_2','noise y_2')
     xlabel('t [s]'); ylabel('noise [m]');
     xlim([0, Tf])
+end
+
+figure('Name','P matrix'), hold on; axis equal;
+for j = 1:2
+    for i = 1:n_obj
+        plot(1:length(t),Pstore_obj{j,i}(1,:),'.','MarkerSize',5,'Color',color(i));
+        plot(1:length(t),Pstore_obj_2{j,i}(1,:),'.','MarkerSize',5,'Color',color(i));
+        plot(1:length(t),Pstore_obj{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+        plot(1:length(t),Pstore_obj_2{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+    end
 end
 
 %% Matrix rotation optimum

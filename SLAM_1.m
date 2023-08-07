@@ -8,7 +8,8 @@ set(0,'DefaultFigureWindowStyle','docked');
 
 % simulation time definition
 Dt = 0.1;
-t = 0:Dt:20;
+Tf = 20;
+t = 0:Dt:Tf;
 
 % convert degree to radiant
 to_rad = pi/180;
@@ -21,26 +22,38 @@ addpath('plots/')
 % import equations to estimate the object position
 obj_sol;
 
+% maps limits definitions
+lim_min = -20;
+lim_max = 20;
+
 %% State initialization
 
 % robot 1 initial position
-x1     = randi([-20 20]);            % x coordinate
-y1     = randi([-20 20]);            % y coordinate
+x1     = randi([lim_min lim_max]);   % x coordinate
+y1     = randi([lim_min lim_max]);   % y coordinate
 theta1 = randi([-180 180])*to_rad;   % theta coordinate
 s0_1   = [x1; y1; theta1];           % state of robot 1
 
 % robot 2 initial position
-x2     = randi([-20 20]);            % x coordinate
-y2     = randi([-20 20]);            % y coordinate
+x2     = randi([lim_min lim_max]);   % x coordinate
+y2     = randi([lim_min lim_max]);   % y coordinate
 theta2 = randi([-180 180])*to_rad;   % theta coordinate1
 s0_2   = [x2; y2; theta2];           % state of robot 2
 
 % object position
-obj_x  = randi([-20 20]);            % x coordinate 
-obj_y  = randi([-20 20]);            % y coordinate
+obj_x  = randi([lim_min lim_max]);   % x coordinate 
+obj_y  = randi([lim_min lim_max]);   % y coordinate
 s0_obj = [obj_x; obj_y];             % state of object
 
-%% Create dataset of robot position + camera measurement
+figure('Name','Object position'),  hold on, axis equal;
+xlabel( 'x [m]' );
+ylabel( 'y [m]' );
+title('Object position');
+xlim([lim_min*2 lim_max*2])
+ylim([lim_min*2 lim_max*2])
+plot(obj_x,obj_y,'.','MarkerSize',30);
+
+%% Dataset: robot position + camera measurement
 
 u_1 = [3*sin(t/10);
        3*cos(t/10);
@@ -53,7 +66,7 @@ u_2 = [3*cos(t/10);
 % Initialize array to store the value 
 s_r1     = zeros(length(s0_1),length(t));
 s_r2     = zeros(length(s0_2),length(t));
-s_camera = zeros(2,length(t));
+s_camera = zeros(length(s0_obj),length(t));
 
 % Store the initial value
 s_r1(:,1) = s0_1;
@@ -73,7 +86,7 @@ for cT=1:length(t)-1
 
 end
 
-%% Calculate exact position of the robot
+%% Loop without uncertainty (Calculate position of the object)
 
 obj_ground = zeros(length(s0_obj),length(t));
 obj_robot1 = zeros(length(s0_obj),length(t));
@@ -89,7 +102,6 @@ for cT=1:length(t)
 end
 
 % PLots real dynamics without uncertainty
-
 figure('Name','Robots positions'), clf, hold on, axis equal;
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
@@ -146,7 +158,7 @@ s_2GPS = s_r2 + (randn(3,length(s_r2))'*R_GPS)' + mu_GPS;
 % INPUT -> input velocity of the robot
 mu_u = 0;    % mean value -> 0 means calibrated
 
-sigma_u = 1e-2;       % variance
+sigma_u = 0.3e-0;       % variance
 
 u_1bar = u_1 + randn(3,length(u_1)).*sigma_u + mu_u.*ones(3,length(s_r1));
 u_2bar = u_2 + randn(3,length(u_2)).*sigma_u + mu_u.*ones(3,length(s_r1));
@@ -158,7 +170,7 @@ u_2bar = u_2 + randn(3,length(u_2)).*sigma_u + mu_u.*ones(3,length(s_r1));
 % % u_1bar = u_1 + mvnrnd([0;0;0], Qi)' + mu_u;
 % % u_2bar = u_2 + mvnrnd([0;0;0], Qi)' + mu_u;
 
-%% Plot uncertainty
+% Plot uncertainty
 
 figure('Name','Camera noise'), clf, hold on;
 plot(t, cameraSensor(1,:) - s_camera(1,:));
@@ -183,7 +195,23 @@ title('GPS noise robot 2');
 legend('noise x GPS','noise y GPS','noise theta GPS')
 xlabel('t [s]'); ylabel('noise [m]/[deg]');
 
-%% Kalman filter
+figure('Name','Input noise robot 1'), clf, hold on;
+plot(t, u_1bar(1,:) - u_1(1,:));
+plot(t, u_1bar(2,:) - u_1(2,:));
+plot(t, u_1bar(3,:) - u_1(3,:));
+title('Input noise robot 1');
+legend('noise input v_x','noise input v_y','noise input yaw rate')
+xlabel('t [s]'); ylabel('noise [m]/[deg]');
+
+figure('Name','Input noise robot 2'), clf, hold on;
+plot(t, u_2bar(1,:) - u_2(1,:));
+plot(t, u_2bar(2,:) - u_2(2,:));
+plot(t, u_2bar(3,:) - u_2(3,:));
+title('Input noise robot 2');
+legend('noise input v_x','noise input v_y','noise input yaw rate')
+xlabel('t [s]'); ylabel('noise [m]/[deg]');
+
+%% Loop with uncertainty (Calculate position of the object)
 
 % CAMERA
 s_camera_est = zeros(length(camera_0),length(t));
@@ -222,7 +250,7 @@ for i=1:length(t)-1
     
     fprintf('Iter %d\n',i)
 
-    %% Robot 1
+    % Robot 1
        
     % Prediction step
     % s_k+1 = A*s_k + B*u_k
@@ -246,7 +274,7 @@ for i=1:length(t)-1
 
     P1Store{i+1} = P1;
 
-    %% Robot 2
+    % Robot 2
     
     % Prediction step
     % s_k+1 = A*s_k + B*u_k
@@ -270,7 +298,7 @@ for i=1:length(t)-1
 
     P2Store{i+1} = P2;
  
-    %% Object detection robot 1
+    % Object detection robot 1
     
     if i >= 20
         tmp_sigma_Err = 0;
@@ -288,7 +316,7 @@ for i=1:length(t)-1
     [obj_est{1,i}(1),p_est_err{1,i}(1)] = PropError(obj_x_sol,varlist,valuelist,errlist);
     [obj_est{1,i}(2),p_est_err{1,i}(2)] = PropError(obj_y_sol,varlist,valuelist,errlist);
 
-    %% Object detection robot 2
+    % Object detection robot 2
 
     if i >= 20
         tmp_sigma_Err = 0;

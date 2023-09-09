@@ -52,6 +52,7 @@ for i = 1:n_obj
 end
 
 figure('Name','Objects position'),  hold on, axis equal;
+LegS = {};
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
 title('Objects position');
@@ -59,7 +60,9 @@ xlim([-obj_lim_x*2 obj_lim_y*2])
 ylim([-obj_lim_x*2 obj_lim_y*2])
 for i = 1:n_obj
     plot(obj{i}(1),obj{i}(2),'.','MarkerSize',30,'Color',color(i));
+    LegS{end+1} = ['Object ', num2str(i)];
 end
+legend(LegS, 'Location', 'best');
 
 %% Dataset: robot position + camera measurement
 
@@ -155,7 +158,7 @@ R2 = [cos(-s_r2(3,1)) -sin(-s_r2(3,1));
   
 s_r2_mob(1:2,:) = R2*s_r2_mob(1:2,:);
 
-%% Calculate exact position of the objects
+%% Calculate exact position of the object
 
 % store object position w.r.t the robots
 obj_robot_cell = cell(2,n_obj);
@@ -203,18 +206,18 @@ xlim([-obj_lim_x*2 obj_lim_y*2])
 ylim([-obj_lim_x*2 obj_lim_y*2])
 
 for i = 1:4:length(t)-1  
-        phi2 = s_r2(3,i) - s_r1(3,i);
-        set(0, 'currentfigure', an_fig1);
-        for j = 1:n_obj
-        [p1(j), p2(j), p11, p22] = plot_location2(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
-                      obj{j}(1),obj{j}(2),camera_sensor{j}(1,i),camera_sensor{j}(2,i),color(j),color(j+10), camera_sensor{n_obj+1}(:,i));
-        drawnow
-        if ~isempty(p11), delete(p11), end
-        if ~isempty(p22), delete(p22), end
-        end
-        if ~isempty(p1), delete(p1), end
-        if ~isempty(p2), delete(p2), end
-        disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_sensor)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_sensor))))])
+    phi2 = s_r2(3,i) - s_r1(3,i);
+    set(0, 'currentfigure', an_fig1);
+    for j = 1:n_obj
+    [p1(j), p2(j), p11, p22] = plot_location2(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
+                  obj{j}(1),obj{j}(2),camera_sensor{j}(1,i),camera_sensor{j}(2,i),color(j),color(j+10), camera_sensor{n_obj+1}(:,i));
+    drawnow
+    if ~isempty(p11), delete(p11), end
+    if ~isempty(p22), delete(p22), end
+    end
+    if ~isempty(p1), delete(p1), end
+    if ~isempty(p2), delete(p2), end
+    disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_sensor)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_sensor))))])
 end
 
 %% Matrix rotation to translate robot 2 RF in robot 1 RF
@@ -227,7 +230,7 @@ RF = [cos(x(3)) -sin(x(3)) x(1) ;
 
 obj_to_min = cell(1,n_obj);
 
-% Compute matrix to translate robot 2 in robot 1 RF
+%% Compute matrix to translate robot 2 in robot 1 RF
 
 % initialize matrix
 matrix_tran = nan(length(t),3);
@@ -358,35 +361,6 @@ R2_bar = [cos(-s_r2_bar(3,1)) -sin(-s_r2_bar(3,1));
           sin(-s_r2_bar(3,1))  cos(-s_r2_bar(3,1))];
   
 s_r2_mob_bar(1:2,:) = R2_bar*s_r2_mob_bar(1:2,:);
-
-% ------ RAW LOOP CLOSURE WITH INVERSE DYNAMICS -------
-% s_r1_bar_corr = s_r1_bar;
-% s_r2_bar_corr = s_r2_bar;
-% s_r1_bar_corr(:,end) = s_r1_bar_corr(:,1);
-% s_r2_bar_corr(:,end) = s_r2_bar_corr(:,1);
-% step = length(t);
-% 
-% for cT=1:time_to_switch
-% 
-%     % Robot dynamic update
-%     s_r1_bar_corr(:,step - cT) = RobotDynamic(s_r1_bar_corr(:,step-cT+1),-u_1bar(:,step-cT),Dt);
-%     s_r2_bar_corr(:,step - cT) = RobotDynamic(s_r2_bar_corr(:,step-cT+1),-u_2bar(:,step-cT),Dt);
-% 
-%     Pstore{1,cT+1} = Pstore{1,cT} + R_INPUT^2.*Dt^2;
-%     Pstore{2,cT+1} = Pstore{2,cT} + R_INPUT^2.*Dt^2;
-% 
-% end
-% 
-% s_r2_mob_bar_corr = s_r2_mob_bar;
-% 
-% for i=1:3
-%     s_r2_mob_bar_corr(i,:) = s_r2_bar(i,:) - ones(1, length(s_r2_bar_corr(i,:))).*s_r2_bar_corr(i,1);
-% end
-% 
-% R2_bar_corr = [cos(-s_r2_bar_corr(3,1)) -sin(-s_r2_bar_corr(3,1));
-%                sin(-s_r2_bar_corr(3,1))  cos(-s_r2_bar_corr(3,1))];
-% 
-% s_r2_mob_bar_corr(1:2,:) = R2_bar_corr*s_r2_mob_bar_corr(1:2,:);
 
 figure('Name','Position noise robot 1'),  hold on;
 plot(t, s_r1_bar(1,:) - s_r1(1,:));
@@ -582,16 +556,6 @@ for i=1:n_obj
     legend('noise x_2','noise y_2')
     xlabel('t [s]'); ylabel('noise [m]');
     xlim([0, Tf])
-end
-
-figure('Name','P matrix'), hold on; axis equal;
-for j = 1:2
-    for i = 1:n_obj
-        plot(1:length(t),Pstore_obj{j,i}(1,:),'.','MarkerSize',5,'Color',color(i));
-        plot(1:length(t),Pstore_obj_2{j,i}(1,:),'.','MarkerSize',5,'Color',color(i));
-        plot(1:length(t),Pstore_obj{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
-        plot(1:length(t),Pstore_obj_2{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
-    end
 end
 
 %% Matrix rotation optimum

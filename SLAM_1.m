@@ -51,17 +51,6 @@ obj_x  = randi([-20 20]);            % x coordinate
 obj_y  = randi([-20 20]);            % y coordinate
 s0_obj = [obj_x; obj_y];             % state of object
 
-figure('Name','Initial conditions'),  hold on, axis equal;
-xlabel( 'x [m]' );
-ylabel( 'y [m]' );
-title('Object position');
-xlim([lim_min*2 lim_max*2])
-ylim([lim_min*2 lim_max*2])
-plot(obj_x,obj_y,'.','MarkerSize',30);
-plot(x1,y1,'.','MarkerSize',50);
-plot(x2,y2,'.','MarkerSize',50);
-legend('Object','Robot 1','Robot 2');
-
 %% Dataset: robot position + camera measurement
 
 u_1 = [3*sin(t/10);
@@ -80,8 +69,7 @@ s_camera = zeros(n_sensor,length(t));
 % Store the initial value
 s_r1(:,1) = s0_1;
 s_r2(:,1) = s0_2;
-camera_0 = [cam_data(s0_1,s0_obj);cam_data(s0_2,s0_obj)];
-s_camera(:,1) = camera_0;
+s_camera(:,1) = [cam_data(s0_1,s0_obj);cam_data(s0_2,s0_obj)];
 
 for cT=1:length(t)-1
 
@@ -110,23 +98,6 @@ for cT=1:length(t)
 
 end
 
-% PLots real dynamics without uncertainty
-figure('Name','Robots positions'), clf, hold on, axis equal;
-xlabel( 'x [m]' );
-ylabel( 'y [m]' );
-title('Robot position in time');
-xlim([-50 50])
-ylim([-50 50])
-
-for i = 1:3:length(t)-1
-
-    phi2 = s_r2(3,i) - s_r1(3,i);
-    plot_location(s_r1(1,i),s_r1(2,i),s_r1(3,i),s_r2(1,i),s_r2(2,i),phi2,...
-                  obj_ground(1,cT),obj_ground(2,cT),s_camera(1,i),s_camera(2,i), color(1), color(11));
-    drawnow
-
-end
-
 %% Sensors uncertainty
 
 % -------------------------------------------------------------------------
@@ -138,7 +109,8 @@ sigma_camera = 1e-4;  % variance
 cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
 
 % -------------------------------------------------------------------------
-% GPS -> give the position and orientation of the robot2
+% GPS -> give the position and orientation of the robot
+ProbGPS = 0.9;        % probability to have GPS signal
 mu_GPS = 0;           % mean value -> 0 means calibrated
 sigma_GPS = 1e-2;     % variance of [x,y]
 sigma_th_GPS = 1e-4;  % variance of [theta]
@@ -157,55 +129,9 @@ sigma_u = 0.3e-0;     % variance
 u_1bar = u_1 + randn(3,length(u_1)).*sigma_u + mu_u.*ones(3,length(s_r1));
 u_2bar = u_2 + randn(3,length(u_2)).*sigma_u + mu_u.*ones(3,length(s_r1));
 
-% Plot uncertainty
-figure('Name','Camera noise'), clf, hold on;
-plot(t, cameraSensor(1,:) - s_camera(1,:));
-plot(t, cameraSensor(2,:) - s_camera(2,:),'--');
-title('Camera noise');
-legend('noise camera 1','noise camera 2')
-xlabel('t [s]'); ylabel('noise [m]');
-
-figure('Name','GPS noise robot 1'), clf, hold on;
-plot(t, s_1GPS(1,:) - s_r1(1,:));
-plot(t, s_1GPS(2,:) - s_r1(2,:));
-plot(t, s_1GPS(3,:) - s_r1(3,:));
-title('GPS noise robot 1');
-legend('noise x GPS','noise y GPS','noise theta GPS')
-xlabel('t [s]'); ylabel('noise [m]/[deg]');
-
-figure('Name','GPS noise robot 2'), clf, hold on;
-plot(t, s_2GPS(1,:) - s_r2(1,:));
-plot(t, s_2GPS(2,:) - s_r2(2,:));
-plot(t, s_2GPS(3,:) - s_r2(3,:));
-title('GPS noise robot 2');
-legend('noise x GPS','noise y GPS','noise theta GPS')
-xlabel('t [s]'); ylabel('noise [m]/[deg]');
-
-figure('Name','Input noise robot 1'), clf, hold on;
-plot(t, u_1bar(1,:) - u_1(1,:));
-plot(t, u_1bar(2,:) - u_1(2,:));
-plot(t, u_1bar(3,:) - u_1(3,:));
-title('Input noise robot 1');
-legend('noise input v_x','noise input v_y','noise input yaw rate')
-xlabel('t [s]'); ylabel('noise [m]/[deg]');
-
-figure('Name','Input noise robot 2'), clf, hold on;
-plot(t, u_2bar(1,:) - u_2(1,:));
-plot(t, u_2bar(2,:) - u_2(2,:));
-plot(t, u_2bar(3,:) - u_2(3,:));
-title('Input noise robot 2');
-legend('noise input v_x','noise input v_y','noise input yaw rate')
-xlabel('t [s]'); ylabel('noise [m]/[deg]');
-
 %% Loop with uncertainty (Calculate position of the object)
 
-% CAMERA
-s_camera_est = zeros(length(camera_0),length(t));
-Pcam = 10^2*eye(length(camera_0));        % our knowledge about the initial position of the robot 1
-
-% GPS
-ProbGPS = 0.9;                            % probability to have GPS signal
-
+% Robot estimate initialization
 s_r1_est = zeros(length(s0_1),length(t));
 s_r1_est(:,1) = s_1GPS(:,1);
 P1 = 10^2*eye(length(s0_1));              % our knowledge about the initial position of the robot 1
@@ -218,10 +144,10 @@ P2 = 10^2*eye(length(s0_2));              % our knowledge about the initial posi
 P2Store = cell(1, length(t));
 P2Store{1} = R_GPS;
 
-obj_ground_est = zeros(length(s0_obj),length(t));
-obj_robot1_est = zeros(length(s0_obj),length(t));
+% obj_ground_est = zeros(length(s0_obj),length(t));
+% obj_robot1_est = zeros(length(s0_obj),length(t));
 
-% OBJECT
+% Object estimate initialization
 obj_est = cell(2,length(t));
 p_est_err = cell(2,length(t));
 
@@ -292,7 +218,7 @@ for i=1:length(t)-1
         j = randi([10,i]);
         tmp_sigma_Err = s_r1_est(3,i+1) - s_r1_est(3, j) + cameraSensor(1,i+1) - cameraSensor(1,j);
         end
-    else, j = i;
+    else, j = randi([1 i]);
     end
 
     valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
@@ -310,7 +236,7 @@ for i=1:length(t)-1
         j = randi([7,i]);
         tmp_sigma_Err = s_r2_est(3,i+1) - s_r2_est(3, j) + cameraSensor(2,i+1) - cameraSensor(2,j);
         end
-    else, j = i;
+    else, j = randi([1 i]);
     end
 
     valuelist = [s_r2_est(1,j),s_r2_est(2,j),s_r2_est(3,j),...

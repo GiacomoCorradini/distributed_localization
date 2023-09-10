@@ -1,6 +1,9 @@
+set(0, 'DefaultLineLineWidth', 2);
+set(0, 'DefaultAxesFontSize', 18);
+
 %% Initial conditions
 
-figure('Name','Objects position'),  hold on, axis equal;
+figure('Name','Initial conditions'), hold on, axis equal;
 LegS = {};
 xlabel( 'x [m]' );
 ylabel( 'y [m]' );
@@ -41,61 +44,88 @@ end
 %% Sensor uncertainty
 
 figure('Name','Camera noise'),  hold on;
+tiledlayout(n_obj,1);
 for i=1:n_obj
-    subplot(n_obj,1,i);
+    nexttile;
     hold on;
     plot(t, camera_sensor_bar{i}(1,:) - camera_sensor{i}(1,:));
     plot(t, camera_sensor_bar{i}(2,:) - camera_sensor{i}(2,:));
     title(['Camera noise obj ',num2str(i)]);
-    legend('noise camera robot 1','noise camera robot 2')
     xlabel('t [s]'); ylabel('noise [m]');
 end
+legend('noise camera robot 1','noise camera robot 2', ...
+    'Location','southoutside','Orientation','horizontal')
 
-figure('Name','Velocity noise robot 1'),  hold on;
+figure('Name','Input noise robot 1'),  hold on;
 plot(t, u_1bar(1,:) - u_1(1,:));
 plot(t, u_1bar(2,:) - u_1(2,:));
 plot(t, u_1bar(3,:) - u_1(3,:));
-title('Velocity noise robot 1');
-legend('velocity noise x_1','velocity noise y_1','velocity noise theta_1')
-xlabel('t [s]'); ylabel('noise [m]');
+title('Input noise robot 1');
+legend('noise v_x','noise v_y','noise yaw rate','Location','southoutside','Orientation','horizontal')
+xlabel('t [s]'); ylabel('noise [m]/[deg]');
 
-figure('Name','Velocity noise robot 2'),  hold on;
+figure('Name','Input noise robot 2'),  hold on;
 plot(t, u_2bar(1,:) - u_2(1,:));
 plot(t, u_2bar(2,:) - u_2(2,:));
 plot(t, u_2bar(3,:) - u_2(3,:));
-title('Velocity noise robot 2');
-legend('velocity noise x_2','velocity noise y_2','velocity noise theta_2')
-xlabel('t [s]'); ylabel('noise [m]');
+title('Input noise robot 2');
+legend('noise v_x','noise v_y','noise yaw rate','Location','southoutside','Orientation','horizontal')
+xlabel('t [s]'); ylabel('noise [m]/[deg]');
 
 %% Plot estimation results
 
 % Robot uncertainty
 
-figure('Name','Robot localisation'), clf, hold on;
-plot(s_r1(1,:),s_r1(2,:),'-',Color='r')
-plot(s_r1_bar(1,:),s_r1_bar(2,:),'-',Color='g')
-plot(s_r2(1,:),s_r2(2,:),'-',Color='b')
-plot(s_r2_bar(1,:),s_r2_bar(2,:),'-',Color='m')
-legend('Robot 1 real','Robot 1 est','Robot 2 real','Robot 2 est')
-title('Robot localisation')
+figure('Name','Robot localisation and mapping'), clf, hold on, axis equal;
+plot(s_r1(1,:),s_r1(2,:),'-',Color=color(1))
+plot(s_r1_est(1,:),s_r1_est(2,:),'-',Color=color(2))
+plot(s_r2(1,:),s_r2(2,:),'-',Color=color(3))
+plot(s_r2_est(1,:),s_r2_est(2,:),'-',Color=color(4))
+for i = 1:n_obj
+    plot(obj_robot_cell_bar{1,i}(1,2:end),obj_robot_cell_bar{1,i}(2,2:end),'.','MarkerSize',10,Color=color(i))
+    plot(obj_robot_cell_bar{3,i}(1,2:end),obj_robot_cell_bar{3,i}(2,2:end),'.','MarkerSize',10,Color=color(i + 10))
+    plot(obj_robot_cell{1,i}(1,2:end),obj_robot_cell{1,i}(2,2:end),'.','MarkerSize',50,Color='r')
+    plot(obj_robot_cell{3,i}(1,2:end),obj_robot_cell{3,i}(2,2:end),'.','MarkerSize',50,Color='r')
+end
+LG = legend('Robot 1 real position','Robot 1 estimated position','Robot 2 real position','Robot 2 estimated position', ...
+    '','','Object real position', ...
+    'Location','northwest');
+title('Robot localisation and mapping')
+set(LG,'FontSize',18)
 xlabel('x [m]'); ylabel('y [m]');
+xlim([-15 40])
+ylim([-15 40])
 
-figure('Name','Position noise robot 1'),  hold on;
-plot(t, s_r1_bar(1,:) - s_r1(1,:));
-plot(t, s_r1_bar(2,:) - s_r1(2,:));
-plot(t, s_r1_bar(3,:) - s_r1(3,:));
-title('Position noise robot 1');
-legend('Position noise x_1','Position noise y_1','Position noise theta_1')
-xlabel('t [s]'); ylabel('noise [m]');
+%%
 
-figure('Name','Position noise robot 2'),  hold on;
-plot(t, s_r2_bar(1,:) - s_r2(1,:));
-plot(t, s_r2_bar(2,:) - s_r2(2,:));
-plot(t, s_r2_bar(3,:) - s_r2(3,:));
-title('Position noise robot 2');
-legend('velocity noise x_2','velocity noise y_2','velocity noise theta_2')
-xlabel('t [s]'); ylabel('noise [m]');
+figure('Name','Robot localisation error');
+tiledlayout(3,1);
 
+nexttile, hold on;
+% figure('Name','Robot localisation X Error'), clf, hold on;
+plot(t(2:end), s_r1_est(1,2:end) - s_r1(1,2:end));
+plot(t(2:end), s_r2_est(1,2:end) - s_r2(1,2:end));
+title('Robot localisation X Error','FontSize',20);
+xlabel('t [s]'); ylabel('x [m]');
+
+nexttile, hold on;
+% figure('Name','Robot localisation Y Error'), clf, hold on;
+plot(t(2:end), s_r1_est(2,2:end) - s_r1(2,2:end));
+plot(t(2:end), s_r2_est(2,2:end) - s_r2(2,2:end));
+title('Robot localisation Y Error','FontSize',20);
+xlabel('t [s]'); ylabel('y [m]');
+
+nexttile, hold on;
+% figure('Name','Robot localisation Theta Error'), clf, hold on;
+plot(t, (s_r1_est(3,:) - s_r1(3,:))/to_rad);
+plot(t, (s_r2_est(3,:) - s_r2(3,:))/to_rad);
+title('Robot localisation Theta Error','FontSize',20);
+xlabel('t [s]'); ylabel('theta [deg]');
+
+LG = legend('Robot 1','Robot 2','Location','southoutside','Orientation','horizontal');
+set(LG,'FontSize',18)
+
+%%
 % Robot position in time with uncertainty
 
 an_fig2 = figure('Name','Robots positions with uncertainty 2');
@@ -108,11 +138,11 @@ ylim([-40 40])
 
 
 for i = 1:4:length(t)-1  
-        phi2 = s_r2_bar(3,i) - s_r1_bar(3,i);
+        phi2 = s_r2_est(3,i) - s_r1_est(3,i);
         for j = 1:n_obj
         set(0, 'currentfigure', an_fig2);
         % shg;
-        [p1(j), p2(j), p11, p22] = plot_location2(s_r1_bar(1,i),s_r1_bar(2,i),s_r1_bar(3,i),s_r2_bar(1,i),s_r2_bar(2,i),phi2,...
+        [p1(j), p2(j), p11, p22] = plot_location2(s_r1_est(1,i),s_r1_est(2,i),s_r1_est(3,i),s_r2_est(1,i),s_r2_est(2,i),phi2,...
                       obj{j}(1),obj{j}(2),camera_sensor_bar{j}(1,i),camera_sensor_bar{j}(2,i),color(j),color(j+10), camera_sensor_bar{n_obj+1}(:,i));
 
         drawnow
@@ -124,28 +154,46 @@ for i = 1:4:length(t)-1
         disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_sensor_bar)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_sensor_bar))))])
 end
 
-% Object estimate
+%% Object estimate
 
-figure('Name','Obj position noise'), clf;
+figure('Name','Objects position Error'), clf;
 for i=1:n_obj
     subplot(2,n_obj,i);
     hold on;
-    plot(t, obj_robot_cell_bar_2{1,i}(1,:) - obj_robot_cell{1,i}(1,:));
-    plot(t, obj_robot_cell_bar_2{1,i}(2,:) - obj_robot_cell{1,i}(2,:));
-    title('Obj position noise robot 1');
+    plot(t, obj_robot_cell_bar{1,i}(1,:) - obj_robot_cell{1,i}(1,:));
+    plot(t, obj_robot_cell_bar{1,i}(2,:) - obj_robot_cell{1,i}(2,:));
+    title('Object position Error robot 1');
     legend('noise x_1','noise y_1')
-    xlabel('t [s]'); ylabel('noise [m]');
+    xlabel('t [s]'); ylabel('err [m]');
     xlim([0, Tf])
 
     subplot(2,n_obj,i+n_obj);
     hold on;
-    plot(t, obj_robot_cell_bar_2{2,i}(1,:) - obj_robot_cell{2,i}(1,:));
-    plot(t, obj_robot_cell_bar_2{2,i}(2,:) - obj_robot_cell{2,i}(2,:));
-    title('Obj position noise robot 2');
+    plot(t, obj_robot_cell_bar{2,i}(1,:) - obj_robot_cell{2,i}(1,:));
+    plot(t, obj_robot_cell_bar{2,i}(2,:) - obj_robot_cell{2,i}(2,:));
+    title('Objects position Error robot 2');
     legend('noise x_2','noise y_2')
-    xlabel('t [s]'); ylabel('noise [m]');
+    xlabel('t [s]'); ylabel('err [m]');
     xlim([0, Tf])
 end
+
+figure('Name','Object position Error'), clf, hold on;
+tiledlayout(2,1);
+
+nexttile, hold on;
+plot(t(2:end), obj_robot_cell_bar{1,1}(1,2:end) - obj_robot_cell{1,1}(1,2:end));
+plot(t(2:end), obj_robot_cell_bar{1,1}(2,2:end) - obj_robot_cell{1,1}(2,2:end));
+title('Object position Error robot 1','FontSize',20);
+xlabel('t [s]'); ylabel('err [m]');
+
+nexttile, hold on;
+plot(t(2:end), obj_robot_cell_bar{2,1}(1,2:end) - obj_robot_cell{2,1}(1,2:end));
+plot(t(2:end), obj_robot_cell_bar{2,1}(2,2:end) - obj_robot_cell{2,1}(2,2:end));
+title('Object position Error robot 2','FontSize',20);
+xlabel('t [s]'); ylabel('err [m]');
+
+LG = legend('x error','y error','Location','southoutside','Orientation','horizontal');
+set(LG,'FontSize',18)
 
 % TO DO: dev std
 
@@ -159,13 +207,13 @@ for i = 1:n_obj
 end
 plot(s_r1(1,:),s_r1(2,:),'-');
 plot(s_r2(1,:),s_r2(2,:),'-');
-plot(s_r1_bar(1,:),s_r1_bar(2,:),'--');
-plot(s_r2_bar(1,:),s_r2_bar(2,:),'--');
+plot(s_r1_est(1,:),s_r1_est(2,:),'--');
+plot(s_r2_est(1,:),s_r2_est(2,:),'--');
 for j = 1:2:3
     for i = 1:n_obj
         plot(obj_robot_cell{j,i}(1,:),obj_robot_cell{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
-        plot(obj_robot_cell_bar_2{j,i}(1,:),obj_robot_cell_bar_2{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
-        plot(nanmean(obj_robot_cell_bar_2{j,i}(1,:)),nanmean(obj_robot_cell_bar_2{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
+        plot(obj_robot_cell_bar{j,i}(1,:),obj_robot_cell_bar{j,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+        plot(nanmean(obj_robot_cell_bar{j,i}(1,:)),nanmean(obj_robot_cell_bar{j,i}(2,:)),'o','MarkerSize',50,'Color',color(i));
     end
 end
 

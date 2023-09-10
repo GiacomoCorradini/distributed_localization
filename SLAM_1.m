@@ -110,7 +110,7 @@ end
 mu_camera    = 0;     % mean value -> 0 means calibrated
 sigma_camera = 1e-4;  % variance
 
-cameraSensor = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
+s_camera_bar = s_camera + randn(1,length(s_camera))*sigma_camera + mu_camera;
 
 % -------------------------------------------------------------------------
 % GPS -> give the position and orientation of the robot
@@ -225,7 +225,7 @@ for i=1:length(t)-1
     % Object detection robot 1
     
     valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
-                 cameraSensor(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
+                 s_camera_bar(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),s_camera_bar(1,i+1)];
     errlist = [sqrt(P1Store{j}(1,1)),sqrt(P1Store{j}(2,2)),sqrt(P1Store{j}(3,3)),sigma_camera,...
                sqrt(P1(1,1)),sqrt(P1(2,2)),sqrt(P1(3,3)),sigma_camera];
     [obj_est{1,i}(1),p_est_err{1,i}(1)] = PropError(obj_x_sol,varlist,valuelist,errlist);
@@ -234,7 +234,7 @@ for i=1:length(t)-1
     % Object detection robot 2
 
     valuelist = [s_r2_est(1,j),s_r2_est(2,j),s_r2_est(3,j),...
-                 cameraSensor(2,j),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(2,i+1)];
+                 s_camera_bar(2,j),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),s_camera_bar(2,i+1)];
     errlist = [sqrt(P2Store{j}(1,1)),sqrt(P2Store{j}(2,2)),sqrt(P2Store{j}(3,3)),sigma_camera,...
                sqrt(P2(1,1)),sqrt(P2(2,2)),sqrt(P2(3,3)),sigma_camera];
     [obj_est{2,i}(1),p_est_err{2,i}(1)] = PropError(obj_x_sol,varlist,valuelist,errlist);

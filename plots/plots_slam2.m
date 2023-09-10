@@ -96,8 +96,6 @@ xlabel('x [m]'); ylabel('y [m]');
 xlim([-15 40])
 ylim([-15 40])
 
-%%
-
 figure('Name','Robot localisation error');
 tiledlayout(3,1);
 
@@ -125,7 +123,6 @@ xlabel('t [s]'); ylabel('theta [deg]');
 LG = legend('Robot 1','Robot 2','Location','southoutside','Orientation','horizontal');
 set(LG,'FontSize',18)
 
-%%
 % Robot position in time with uncertainty
 
 an_fig2 = figure('Name','Robots positions with uncertainty 2');
@@ -195,8 +192,6 @@ xlabel('t [s]'); ylabel('err [m]');
 LG = legend('x error','y error','Location','southoutside','Orientation','horizontal');
 set(LG,'FontSize',18)
 
-% TO DO: dev std
-
 %% SLAM plot
 
 figure('Name','Maps'), hold on; axis equal;
@@ -219,26 +214,78 @@ end
 
 %% Centralised WLS
 
-figure('Name','Centralised WLS'), hold on, axis equal;
-title('Centralised WLS')
+figure('Name','Object position Estimation Centralised WLS'), hold on, axis equal;
+title('Object position Estimation Centralised WLS')
 xlabel( 'x [m]' ); 
 ylabel( 'y [m]' );
 for i = 1:n_obj
+    plot(obj_est_centr{i}(1,:),obj_est_centr{i}(2,:),'.','MarkerSize',10,'Color',color(i+10));
     plot(obj{i}(1),obj{i}(2),'.','MarkerSize',60,'Color',color(i));
-    plot(p_hat{i}(1,:),p_hat{i}(2,:),'o','MarkerSize',5,'Color',color(i));
 end
+xlim([-5 20])
+ylim([-5 20])
+LG = legend('','Object 1 position real','','Object 2 position real','', ...
+            'Object 3 position real','','Object 4 position real','','Object 5 position real','Location','southwest');
+set(LG,'FontSize',18)
 
-%% Distributed WLS
+%% Object position centr vs distr
 
-figure('Name','Distributed WLS'), hold on, axis equal;
-title('Distributed WLS')
+figure('Name','Object position Estimation robot 1'), hold on, axis equal;
+for i = 1:n_obj
+%     plot(obj_est_centr{i}(1,1:end-1),obj_est_centr{i}(2,1:end-1),'.',color=color(i))
+    plot(obj_est_distr_MD{1,i}(1,1:end-1),obj_est_distr_MD{1,i}(2,1:end-1),'o','MarkerSize',5,color=color(i))
+    plot(obj_est_distr_MH{1,i}(1,1:end-1),obj_est_distr_MH{1,i}(2,1:end-1),'d','MarkerSize',5,color=color(i+10))
+    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',40,color='r')
+end
+xlim([-5 20])
+ylim([-5 20])
 xlabel( 'x [m]' ); 
 ylabel( 'y [m]' );
+LG = legend('Distributed Maximum degree weights','Distributed Metropolis Hastings weight', 'Object real position','Location','southwest');
+set(LG,'FontSize',18)
+title('Object position Estimation')
+
+figure('Name','Object position Estimation robot 2'), hold on, axis equal;
 for i = 1:n_obj
-    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',60,'Color',color(i));
-    plot(p_est_distr_MH{1,i}(1,:),p_est_distr_MH{1,i}(2,:),'o','MarkerSize',5,'Color',color(i));
-    plot(p_est_distr_MH{2,i}(1,:),p_est_distr_MH{2,i}(2,:),'*','MarkerSize',5,'Color',color(i));
+%     plot(obj_est_centr{i}(1,1:end-1),obj_est_centr{i}(2,1:end-1),'.',color=color(i))
+    plot(obj_est_distr_MD{2,i}(1,1:end-1),obj_est_distr_MD{2,i}(2,1:end-1),'o','MarkerSize',5,color=color(i))
+    plot(obj_est_distr_MH{2,i}(1,1:end-1),obj_est_distr_MH{2,i}(2,1:end-1),'d','MarkerSize',5,color=color(i+10))
+    plot(obj{i}(1),obj{i}(2),'.','MarkerSize',40,color='r')
 end
+xlim([-5 20])
+ylim([-5 20])
+xlabel( 'x [m]' ); 
+ylabel( 'y [m]' );
+LG = legend('Distributed Maximum degree weights','Distributed Metropolis Hastings weight', 'Object real position','Location','southwest');
+set(LG,'FontSize',18)
+title('Object position Estimation')
+
+
+%% Error in time centr vs distr
+
+figure('Name','Object position Error in time with different algorithm'), clf, hold on;
+tiledlayout(3,1);
+
+nexttile, hold on;
+plot(t(1:end-1), obj_est_centr{1}(1,1:end-1) - obj_robot_cell{1}(1,1:end-1));
+plot(t(1:end-1), obj_est_centr{1}(2,1:end-1) - obj_robot_cell{1}(2,1:end-1));
+title('Object position Error centralised WLS','FontSize',20);
+xlabel('t [s]'); ylabel('err [m]');
+
+nexttile, hold on;
+plot(t(2:end-1), obj_est_distr_MD{1,1}(1,1:end-1) - obj_robot_cell{1}(1,2:end-1));
+plot(t(2:end-1), obj_est_distr_MD{1,1}(2,1:end-1) - obj_robot_cell{1}(2,2:end-1));
+title('Object position Error Distributed Maximum degree weights','FontSize',20);
+xlabel('t [s]'); ylabel('err [m]');
+
+nexttile, hold on;
+plot(t(2:end-1), obj_est_distr_MH{1,1}(1,1:end-1) - obj_robot_cell{1}(1,2:end-1));
+plot(t(2:end-1), obj_est_distr_MH{1,1}(2,1:end-1) - obj_robot_cell{1}(2,2:end-1));
+title('Object position Error Distributed Metropolis Hastings weights','FontSize',20);
+xlabel('t [s]'); ylabel('err [m]');
+
+LG = legend('x error','y error','Location','southoutside','Orientation','horizontal');
+set(LG,'FontSize',18)
 
 
 

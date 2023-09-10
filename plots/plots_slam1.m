@@ -34,8 +34,8 @@ end
 %% Sensor uncertainty
 
 figure('Name','Camera noise'), clf, hold on;
-plot(t, cameraSensor(1,:) - s_camera(1,:));
-plot(t, cameraSensor(2,:) - s_camera(2,:),'--');
+plot(t, s_camera_bar(1,:) - s_camera(1,:));
+plot(t, s_camera_bar(2,:) - s_camera(2,:),'--');
 title('Camera noise');
 legend('noise camera 1','noise camera 2')
 xlabel('t [s]'); ylabel('noise [m]');
@@ -178,6 +178,8 @@ plot(obj_x,obj_y,'.','MarkerSize',40,color='r')
 LG = legend('Centralized WLS','Distributed Maximum degree weights','Distributed Metropolis Hastings weight', 'Object real position','Location','southwest');
 set(LG,'FontSize',18)
 title('Object position Estimation robot')
+xlabel( 'x [m]' ); 
+ylabel( 'y [m]' );
 
 figure('Name','Object position Estimation Estimation robot 2'), hold on, axis equal;
 plot(obj_est_centr(1,1:end-1),obj_est_centr(2,1:end-1),'.')
@@ -187,6 +189,8 @@ plot(obj_x,obj_y,'.','MarkerSize',40,color='r')
 LG = legend('Centralised WLS','Distributed Maximum degree weights','Distributed Metropolis Hastings weights', 'Object real position','Location','southwest');
 set(LG,'FontSize',18)
 title('Object position Distributed Estimation robot')
+xlabel( 'x [m]' ); 
+ylabel( 'y [m]' );
 
 %% Error in time centr vs distr
 

@@ -5,6 +5,7 @@ clear
 close all
 
 set(0,'DefaultFigureWindowStyle','docked');
+warning off
 
 % simulation time definition
 Dt = 0.1;
@@ -321,7 +322,7 @@ for i = 1:n_obj
         fprintf('Iter (%d,%d)\n',i,cT)
 
         if cT >= 15, j = randi([2 cT-10]);
-        else, j = randi([2 cT]);
+        else, j = cT - 1;
         end
     
         if ~isnan(camera_sensor_bar{i}(1,cT)) && ~isnan(camera_sensor_bar{i}(1,j))
@@ -399,11 +400,11 @@ end
 
 %% Centralised WLS
 
-p_hat = cell(1,n_obj);
+obj_est_centr = cell(1,n_obj);
 
 for i = 1:n_obj
     for j = 1:2
-        p_hat{j,i} = zeros(2,length(t));
+        obj_est_centr{j,i} = zeros(2,length(t));
     end
 end
 
@@ -424,7 +425,7 @@ for ob = 1:n_obj
             H = [H; eye(2)];
             Z = [Z; obj_robot_cell_bar{h,ob}(1:2,cT)];
         end
-        p_hat{ob}(:,cT) = inv(H'*inv(R)*H)*H'*inv(R)*Z;
+        obj_est_centr{ob}(:,cT) = inv(H'*inv(R)*H)*H'*inv(R)*Z;
     end
 end
 
@@ -432,13 +433,8 @@ end
 
 % Storing the estimates
 n_sens = 2;
-p_est_distr = cell(2,n_obj);
-p_est_distr_MH = cell(2,n_obj);
-
-% for i = 1:n_obj
-%     p_est_distr{1,i} = zeros(2,length(t));
-%     p_est_distr_MH{1,i} = zeros(2,length(t));
-% end
+obj_est_distr_MD = cell(2,n_obj);
+obj_est_distr_MH = cell(2,n_obj);
 
 for ob = 1:n_obj
     for cT = 1:length(t)-1
@@ -466,7 +462,7 @@ for ob = 1:n_obj
         end
     
         % Number of consensus protocol msg exchanges
-        m = 10;
+        m = 50;
         
         for k=1:m
             % Topology matrix
@@ -510,12 +506,12 @@ for ob = 1:n_obj
         
         % Estimates
         for i=1:n_sens
-            p_est_distr{i,ob}(:,cT) = inv(F{i})*a{i};
+            obj_est_distr_MD{i,ob}(:,cT) = inv(F{i})*a{i};
         end
         
         % Estimates
         for i=1:n_sens
-            p_est_distr_MH{i,ob}(:,cT) = inv(F_MH{i})*a_MH{i};
+            obj_est_distr_MH{i,ob}(:,cT) = inv(F_MH{i})*a_MH{i};
         end
     end
 end

@@ -1,4 +1,4 @@
-%% Objects position
+%% Initial conditions
 
 figure('Name','Objects position'),  hold on, axis equal;
 LegS = {};
@@ -13,7 +13,7 @@ for i = 1:n_obj
 end
 legend(LegS, 'Location', 'best');
 
-%% Robot position in time
+%% Robot position in time without uncertainty
 
 an_fig1 = figure('Name','Robots positions');
 hold on, axis equal;
@@ -67,7 +67,18 @@ title('Velocity noise robot 2');
 legend('velocity noise x_2','velocity noise y_2','velocity noise theta_2')
 xlabel('t [s]'); ylabel('noise [m]');
 
-%% Robot uncertainty
+%% Plot estimation results
+
+% Robot uncertainty
+
+figure('Name','Robot localisation'), clf, hold on;
+plot(s_r1(1,:),s_r1(2,:),'-',Color='r')
+plot(s_r1_bar(1,:),s_r1_bar(2,:),'-',Color='g')
+plot(s_r2(1,:),s_r2(2,:),'-',Color='b')
+plot(s_r2_bar(1,:),s_r2_bar(2,:),'-',Color='m')
+legend('Robot 1 real','Robot 1 est','Robot 2 real','Robot 2 est')
+title('Robot localisation')
+xlabel('x [m]'); ylabel('y [m]');
 
 figure('Name','Position noise robot 1'),  hold on;
 plot(t, s_r1_bar(1,:) - s_r1(1,:));
@@ -85,7 +96,7 @@ title('Position noise robot 2');
 legend('velocity noise x_2','velocity noise y_2','velocity noise theta_2')
 xlabel('t [s]'); ylabel('noise [m]');
 
-%% Robot position in time with uncertainty
+% Robot position in time with uncertainty
 
 an_fig2 = figure('Name','Robots positions with uncertainty 2');
 hold on, axis equal;
@@ -113,9 +124,9 @@ for i = 1:4:length(t)-1
         disp(['Iter', num2str(i), ' - obj1 = ' num2str(sum(~isnan(cellfun(@(v)v(1,i),camera_sensor_bar)))), ', obj2 = ', num2str(sum(~isnan(cellfun(@(v)v(2,i),camera_sensor_bar))))])
 end
 
-%% Object estimate
+% Object estimate
 
-figure('Name','Obj position noise 2'), clf;
+figure('Name','Obj position noise'), clf;
 for i=1:n_obj
     subplot(2,n_obj,i);
     hold on;
@@ -135,6 +146,8 @@ for i=1:n_obj
     xlabel('t [s]'); ylabel('noise [m]');
     xlim([0, Tf])
 end
+
+% TO DO: dev std
 
 %% SLAM plot
 
@@ -156,7 +169,7 @@ for j = 1:2:3
     end
 end
 
-%% cCentralised WLS
+%% Centralised WLS
 
 figure('Name','Centralised WLS'), hold on, axis equal;
 title('Centralised WLS')

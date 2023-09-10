@@ -32,6 +32,9 @@ n_robot = 2;
 % number of camera sensors (= n° of robots)
 n_sensor = n_robot;
 
+% random seed for plot
+rng(2)
+
 %% State initialization
 
 % robot 1 initial position
@@ -123,24 +126,28 @@ s_2GPS = s_r2 + (randn(3,length(s_r2))'*R_GPS)' + mu_GPS;
 
 % -------------------------------------------------------------------------
 % INPUT -> input velocity of the robot
-mu_u = 0;             % mean value -> 0 means calibrated
-sigma_u = 0.3e-0;     % variance
+mu_u = ones(3,1).*0; % mean value -> 0 means calibrated
+sigma_u_t = 0.3e-0;          % variance of [x,y]
+sigma_u_r = 1e-4;          % variance of [theta]
+R_INPUT = [sigma_u_t,     0 ,         0;
+              0,      sigma_u_t,      0;
+              0,          0,     sigma_u_r];
 
-u_1bar = u_1 + randn(3,length(u_1)).*sigma_u + mu_u.*ones(3,length(s_r1));
-u_2bar = u_2 + randn(3,length(u_2)).*sigma_u + mu_u.*ones(3,length(s_r1));
+u_1bar = u_1 + (randn(3,length(u_1))'*R_INPUT)' + mu_u;
+u_2bar = u_2 + (randn(3,length(u_2))'*R_INPUT)' + mu_u;
 
 %% Loop with uncertainty (Calculate position of the object)
 
 % Robot estimate initialization
 s_r1_est = zeros(length(s0_1),length(t));
 s_r1_est(:,1) = s_1GPS(:,1);
-P1 = 10^2*eye(length(s0_1));              % our knowledge about the initial position of the robot 1
+P1 = R_GPS;              % our knowledge about the initial position of the robot 1
 P1Store = cell(1, length(t));
 P1Store{1} = R_GPS;
 
 s_r2_est = zeros(length(s0_2),length(t));
 s_r2_est(:,1) = s_2GPS(:,1);
-P2 = 10^2*eye(length(s0_2));              % our knowledge about the initial position of the robot 2
+P2 = R_GPS;              % our knowledge about the initial position of the robot 2
 P2Store = cell(1, length(t));
 P2Store{1} = R_GPS;
 
@@ -169,7 +176,7 @@ for i=1:length(t)-1
     A = eye(3);
     B = eye(3)*Dt;
     S1EstPred = A*s_r1_est(:,i) + B*u_1bar(:,i);                     % Dyanmics robot 1
-    P1pred = A*P1*A' + B*sigma_u^2*B';                               % Prior predict
+    P1pred = A*P1*A' + B*R_INPUT^2*B';                               % Prior predict
     
     % Update step
     pGPS1 = rand(1);                                                 % probability to have GPS information
@@ -193,7 +200,7 @@ for i=1:length(t)-1
     A = eye(3);
     B = eye(3)*Dt;
     S2EstPred = A*s_r2_est(:,i) + B*u_2bar(:,i);                     % Dyanmics robot 1
-    P2pred = A*P2*A' + B*sigma_u^2*B';                               % Prior predict
+    P2pred = A*P2*A' + B*R_INPUT^2*B';                               % Prior predict
     
     % Update step
     pGPS2 = rand(1);                                                 % probability to have GPS information
@@ -210,17 +217,12 @@ for i=1:length(t)-1
 
     P2Store{i+1} = P2;
  
-    % Object detection robot 1
-    
-    if i >= 20
-        tmp_sigma_Err = 0;
-        while abs(tmp_sigma_Err) < 0.02     
-        j = randi([10,i]);
-        tmp_sigma_Err = s_r1_est(3,i+1) - s_r1_est(3, j) + cameraSensor(1,i+1) - cameraSensor(1,j);
-        end
+    if i >= 15, j = randi([1 i-10]);
     else, j = randi([1 i]);
     end
 
+    % Object detection robot 1
+    
     valuelist = [s_r1_est(1,j),s_r1_est(2,j),s_r1_est(3,j),...
                  cameraSensor(1,j),s_r1_est(1,i+1),s_r1_est(2,i+1),s_r1_est(3,i+1),cameraSensor(1,i+1)];
     errlist = [sqrt(P1Store{j}(1,1)),sqrt(P1Store{j}(2,2)),sqrt(P1Store{j}(3,3)),sigma_camera,...
@@ -229,15 +231,6 @@ for i=1:length(t)-1
     [obj_est{1,i}(2),p_est_err{1,i}(2)] = PropError(obj_y_sol,varlist,valuelist,errlist);
 
     % Object detection robot 2
-
-    if i >= 20
-        tmp_sigma_Err = 0;
-        while abs(tmp_sigma_Err) < 0.02       
-        j = randi([7,i]);
-        tmp_sigma_Err = s_r2_est(3,i+1) - s_r2_est(3, j) + cameraSensor(2,i+1) - cameraSensor(2,j);
-        end
-    else, j = randi([1 i]);
-    end
 
     valuelist = [s_r2_est(1,j),s_r2_est(2,j),s_r2_est(3,j),...
                  cameraSensor(2,j),s_r2_est(1,i+1),s_r2_est(2,i+1),s_r2_est(3,i+1),cameraSensor(2,i+1)];

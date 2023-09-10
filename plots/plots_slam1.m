@@ -91,29 +91,24 @@ LG = legend('Robot 1 real position','Robot 1 estimated position','Robot 2 real p
     'Location','southwest');
 title('Robot localisation and mapping')
 set(LG,'FontSize',18)
-% xlim([-60 60])
-% ylim([-60 60])
 xlabel('x [m]'); ylabel('y [m]');
 
 figure('Name','Robot localisation error');
 tiledlayout(3,1);
 
 nexttile, hold on;
-% figure('Name','Robot localisation X Error'), clf, hold on;
 plot(t(2:end), s_r1_est(1,2:end) - s_r1(1,2:end));
 plot(t(2:end), s_r2_est(1,2:end) - s_r2(1,2:end));
 title('Robot localisation X Error','FontSize',20);
 xlabel('t [s]'); ylabel('x [m]');
 
 nexttile, hold on;
-% figure('Name','Robot localisation Y Error'), clf, hold on;
 plot(t(2:end), s_r1_est(2,2:end) - s_r1(2,2:end));
 plot(t(2:end), s_r2_est(2,2:end) - s_r2(2,2:end));
 title('Robot localisation Y Error','FontSize',20);
 xlabel('t [s]'); ylabel('y [m]');
 
 nexttile, hold on;
-% figure('Name','Robot localisation Theta Error'), clf, hold on;
 plot(t, (s_r1_est(3,:) - s_r1(3,:))/to_rad);
 plot(t, (s_r2_est(3,:) - s_r2(3,:))/to_rad);
 title('Robot localisation Theta Error','FontSize',20);
@@ -121,23 +116,11 @@ xlabel('t [s]'); ylabel('theta [deg]');
 
 LG = legend('Robot 1','Robot 2','Location','southoutside','Orientation','horizontal');
 set(LG,'FontSize',18)
-%%
+
 % Robot position in time with uncertainty
 %TO DO 
 
 % Object estimate
-
-% figure('Name','Object position estinate'), clf, hold on;
-% plot(obj_ground(1,:),obj_ground(2,:),'.','MarkerSize',100);
-% for i = 1:length(t)
-%     plot(obj_est{1,i}(1),obj_est{1,i}(2),'Color','r','Marker','.','MarkerSize',20);
-%     plot(obj_est{2,i}(1),obj_est{2,i}(2),'Color','g','Marker','.','MarkerSize',20);
-% end
-% title('Object position estinate');
-% xlim([-55 55])
-% ylim([-55 55])
-% legend('Obj real','Obj est robot 1','Obj est robot 2','Location','best')
-% xlabel('t [s]'); ylabel('err [m]');
 
 figure('Name','Object position Error'), clf, hold on;
 tiledlayout(2,1);
@@ -157,16 +140,6 @@ xlabel('t [s]'); ylabel('err [m]');
 LG = legend('x error','y error','Location','southoutside','Orientation','horizontal');
 set(LG,'FontSize',18)
 
-% figure('Name','Dev std'), clf, hold on;
-%     plot(t, cellfun(@(v)v(1),p_est_err(1,:)));
-%     plot(t, cellfun(@(v)v(2),p_est_err(1,:)));
-%     plot(t, cellfun(@(v)v(1),p_est_err(2,:)));
-%     plot(t, cellfun(@(v)v(2),p_est_err(2,:)));
-% title('Dev std');
-% legend('dev std obj_x-R1','dev std obj_y-R1','dev std obj_x-R2','dev std obj_y-R2')
-% xlabel('t [s]'); ylabel('[m]');
-
-
 % figure('Name','Object position estimate with interpolation'), clf, hold on, axis equal;
 % p1 = plot(cellfun(@(v)v(1),obj_est(1,10:end-1)),cellfun(@(v)v(2),obj_est(1,10:end-1)),'.','Color', "#0072BD",'DisplayName','Est obj robot 1');
 % p2 = plot(cellfun(@(v)v(1),obj_est(2,10:end-1)),cellfun(@(v)v(2),obj_est(2,10:end-1)),'.','Color',"#D95319",'DisplayName','Est obj robot 2');
@@ -185,29 +158,23 @@ set(LG,'FontSize',18)
 % set(LG,'FontSize',14)
 % xlabel('x [m]'); ylabel('y [m]');
 
-%% SLAM plot
-
 %% Centralised WLS
 
 figure('Name','Object Error in position using centralised WLS'), clf, hold on, axis equal;
-plot(obj_ground(1,:),obj_ground(2,:),'o','MarkerSize',30);
 plot(obj_est_centr(1,:),obj_est_centr(2,:),'.');
+plot(obj_ground(1,:),obj_ground(2,:),'.','MarkerSize',30);
 title('Object Error in position using centralised WLS');
 LG = legend('x error','y error');
 set(LG,'FontSize',18)
-xlim([-55 55])
-ylim([-55 55])
 xlabel('t [s]'); ylabel('err [m]');
 
-%% Distributed
+%% Object position centr vs distr
 
 figure('Name','Object position Estimation robot 1'), hold on, axis equal;
 plot(obj_est_centr(1,1:end-1),obj_est_centr(2,1:end-1),'.')
 plot(cellfun(@(v)v(1),obj_est_distr_MD(1,1:end-1)),cellfun(@(v)v(2),obj_est_distr_MD(1,1:end-1)),'o','MarkerSize',5)
 plot(cellfun(@(v)v(1),obj_est_distr_MH(1,1:end-1)),cellfun(@(v)v(2),obj_est_distr_MH(1,1:end-1)),'d','MarkerSize',5)
 plot(obj_x,obj_y,'.','MarkerSize',40,color='r')
-% xlim([-20 20])
-% ylim([-20 20])
 LG = legend('Centralized WLS','Distributed Maximum degree weights','Distributed Metropolis Hastings weight', 'Object real position','Location','southwest');
 set(LG,'FontSize',18)
 title('Object position Estimation robot')
@@ -217,22 +184,11 @@ plot(obj_est_centr(1,1:end-1),obj_est_centr(2,1:end-1),'.')
 plot(cellfun(@(v)v(1),obj_est_distr_MD(2,1:end-1)),cellfun(@(v)v(2),obj_est_distr_MD(2,1:end-1)),'o','MarkerSize',5)
 plot(cellfun(@(v)v(1),obj_est_distr_MH(2,1:end-1)),cellfun(@(v)v(2),obj_est_distr_MH(2,1:end-1)),'d','MarkerSize',5)
 plot(obj_x,obj_y,'.','MarkerSize',40,color='r')
-% xlim([-20 20])
-% ylim([-20 20])
 LG = legend('Centralised WLS','Distributed Maximum degree weights','Distributed Metropolis Hastings weights', 'Object real position','Location','southwest');
 set(LG,'FontSize',18)
 title('Object position Distributed Estimation robot')
 
 %% Error in time centr vs distr
-
-% figure('Name','Object position Error using centralised WLS'), clf, hold on; 
-% plot(t, obj_est_centr(1,:) - obj_ground(1,:));
-% plot(t, obj_est_centr(2,:) - obj_ground(2,:));
-% title('Object position Error using centralised WLS');
-% xlabel('t [s]'); ylabel('err [m]');
-% LG = legend('x error','y error','Location','southoutside','Orientation','horizontal');
-% set(LG,'FontSize',14)
-
 
 figure('Name','Object position Error in time with different algorithm'), clf, hold on;
 tiledlayout(3,1);
@@ -257,23 +213,3 @@ xlabel('t [s]'); ylabel('err [m]');
 
 LG = legend('x error','y error','Location','southoutside','Orientation','horizontal');
 set(LG,'FontSize',18)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

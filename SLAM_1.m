@@ -33,7 +33,8 @@ n_robot = 2;
 n_sensor = n_robot;
 
 % random seed for plot
-rng(2)
+rng(2);
+warning off
 
 %% State initialization
 
